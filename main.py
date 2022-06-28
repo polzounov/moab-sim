@@ -182,13 +182,7 @@ class TemplateSimulatorSession:
             )
 
     def episode_step(self, action: Dict):
-        """Step through the environment for a single iteration.
-
-        Parameters
-        ----------
-        action : Dict
-            An action to take to modulate environment.
-        """
+        """Step through the environment for a single iteration."""
         pitch, roll = action["command"]["input_pitch"], action["command"]["input_roll"]
         self.simulator.step(np.array([pitch, roll], dtype=np.float32))
         # if self.render:
@@ -453,6 +447,7 @@ def main(
                 # This updates the simulation state, which will be sent back in the next loop when
                 # client.session.advance is called.
                 iteration += 1
+
                 delay = 0.0
                 if sim_speed > 0:
 
@@ -545,7 +540,7 @@ if __name__ == "__main__":
         "--sim-name",
         type=str,
         metavar="SIMULATOR NAME",
-        default="Cartpole",
+        default="Moab",
         help="Simulator name to use registering with the platform",
     )
 
