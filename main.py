@@ -67,8 +67,8 @@ class MoabSimBonsai(MoabSim):
     def get_state(self) -> Dict[str, float]:
         """Return a dictionary with all the state and physics info."""
         d = self.params.copy()  # Make a copy
-        d["x"], d["y"], d["x_vel"], d["y_vel"] = self.state
-        d["pitch"], d["roll"] = self.plate_angles
+        d["ball_x"], d["ball_y"], d["ball_x_vel"], d["ball_y_vel"] = self.state
+        d["ball_pitch"], d["ball_roll"] = self.plate_angles
         return d
 
 
