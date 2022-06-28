@@ -12,31 +12,12 @@ from moab_sim import MoabSim
 pygame.init()
 
 
-# Controllers ------------------------------------------------------------------
-def pid_controller(Kp=3.4, Ki=0.0227, Kd=20.455, **kwargs):
-    sum_x, sum_y = 0, 0
-
-    def next_action(state):
-        nonlocal sum_x, sum_y
-        x, y, vel_x, vel_y = state
-        sum_x += x
-        sum_y += y
-
-        action_x = Kp * x + Ki * sum_x + Kd * vel_x
-        action_y = Kp * y + Ki * sum_y + Kd * vel_y
-        action = np.array([-action_x / 22, -action_y / 22])
-        return np.clip(action, -1, 1)
-
-    return next_action
-
-
-# Env --------------------------------------------------------------------------
 class MoabEnv(Env):
     metadata = {"render.modes": ["human"]}
 
     def __init__(self, max_iterations=2048):
         act_max = np.asarray([1, 1], dtype=np.float32)
-        plate_radius = 0.225 / 2
+        plate_radius = 0.1125
         obs_max = np.asarray(
             [plate_radius, plate_radius, np.inf, np.inf], dtype=np.float32
         )
@@ -107,21 +88,20 @@ class MoabEnv(Env):
         return img
 
 
-def main1(Kp=75, Ki=0.5, Kd=45):
-    env = MoabEnv()
-    state = env.reset()
-    controller = pid_controller(Kp, Ki, Kd)
-    print(state)
+class MoabDomainRandEnv(MoabEnv):
+    def reset(self):
+        # defaults for all physics params
+        d_g, d_pr, d_bm, d_br, d_bs, d_msv = 9.81, 0.1125, 0.0027, 0.02, 0.0002, 1.0
 
-    while True:
-        action = controller(state)
-        state, reward, done, info = env.step(action)
-        env.render()
-        print(state, reward, action, done)
-        # if done:
-        #     break
+        dr_config = {
+            "gravity": np.random.uniform(d_g * 0.67, d_g * 1.5),
+            "plate_radius": np.random.uniform(d_pr * 0.67, d_pr * 1.5),
+            "ball_mass": np.random.uniform(d_bm * 0.67, d_bm * 1.5),
+            "ball_radius": np.random.uniform(d_br * 0.67, d_br * 1.5),
+            "ball_shell": np.random.uniform(d_bs * 0.67, d_bs * 1.5),
+            "max_starting_velocity": np.random.uniform(d_msv * 0.67, d_msv * 1.5),
+        }
 
-
-if __name__ == "__main__":
-    pass
-    main1(Kp=75, Ki=0.5, Kd=45)
+        self.iteration_count = 0
+        self.state = self.sim.reset(config=dr_config)
+        return self.state

@@ -1,0 +1,51 @@
+import sys
+import gym
+from moab_env import MoabEnv, MoabDomainRandEnv
+from gym.wrappers import TimeLimit
+
+# from stable_baselines3 import PPO
+from sb3_contrib import RecurrentPPO
+from sb3_contrib.common.recurrent.policies import RecurrentActorCriticPolicy
+from stable_baselines3.common.callbacks import CheckpointCallback
+
+
+save_path = "./logs/" + sys.argv[1]
+save_path = save_path[:-1] if save_path[-1] == "/" else save_path
+
+tb_path = "./tb/" + sys.argv[1]
+env = MoabDomainRandEnv()
+env = TimeLimit(env, max_episode_steps=2048)
+
+# fmt: off
+checkpoint_callback = CheckpointCallback(save_freq=10_000, save_path=save_path, name_prefix="moab")
+# fmt: on
+
+
+# model = PPO("MlpPolicy", env, verbose=1)
+
+mlp_lstm_policy = RecurrentActorCriticPolicy(
+    env.observation_space,
+    env.action_space,
+    lstm_hidden_size=64,  # Reduced from 256
+    n_lstm_layers=1,
+    shared_lstm=False,
+    enable_critic_lstm=True,
+    lstm_kwargs=None,
+)
+model = RecurrentPPO(mlp_lstm_policy, env, verbose=1)
+
+
+model.learn(total_timesteps=5_000_000, callback=checkpoint_callback)
+model.save(save_path + "/trained_moab")
+
+
+# env = MoabEnv()
+# obs = env.reset()
+# while True:
+#     action, _states = model.predict(obs, deterministic=True)
+#     obs, reward, done, info = env.step(action)
+#     env.render()
+#     if done:
+#         obs = env.reset()
+
+# env.close()

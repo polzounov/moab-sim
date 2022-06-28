@@ -1,12 +1,13 @@
 import sys
 import gym
 import time
-from moab_env import MoabEnv
-from stable_baselines3 import PPO
-from stable_baselines3.common.callbacks import CheckpointCallback
+import numpy as np
+from moab_env import MoabEnv, MoabDomainRandEnv
+from sb3_contrib import RecurrentPPO
 
-env = MoabEnv()
-model = PPO.load(sys.argv[1])
+env = MoabDomainRandEnv()
+# model = PPO.load(sys.argv[1])
+model = RecurrentPPO.load(sys.argv[1])
 
 
 # phys_params = {
@@ -24,18 +25,26 @@ model = PPO.load(sys.argv[1])
 obs = env.reset()
 r_tot = 0
 
+# cell and hidden state of the LSTM
+lstm_states = None
+num_envs = 1
+# Episode start signals are used to reset the lstm states
+episode_starts = np.ones((num_envs,), dtype=bool)
+
 while True:
     for _ in range(100):
-        action, _states = model.predict(obs, deterministic=True)
+        action, lstm_states = model.predict(
+            obs, state=lstm_states, episode_start=episode_starts, deterministic=True
+        )
         obs, reward, done, info = env.step(action)
         r_tot += reward
 
         env.render()
-        # time.sleep(0.5)
 
         if done:
-            obs = env.reset()
             print("Ep reward:", r_tot)
+            obs = env.reset()
+            print(env.sim.params)
             r_tot = 0
     obs = env.reset()
     print("Ep reward:", r_tot)

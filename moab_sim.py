@@ -1,6 +1,6 @@
 import cv2
 import numpy as np
-from typing import Tuple, Optional
+from typing import Dict, Tuple, Optional
 
 
 """
@@ -32,6 +32,7 @@ def moab_model(
     state: np.ndarray,
     action: np.ndarray,
     dt: float = 1 / 30,
+    jitter: float = 0,
     gravity: float = 9.81,
     ball_radius: float = 0.02,
     ball_shell: float = 0.0002,
@@ -40,6 +41,7 @@ def moab_model(
     # fmt: off
     r = ball_radius
     h = ball_radius - ball_shell  # hollow radius
+    dt += np.random.uniform(-jitter, jitter)  # add jitter to the simulation timesteps
 
     # Ball intertia for a hollow sphere is:
     # I = (2 / 5) * m * ((r**5 - h**5) / (r**3 - h**3))
@@ -60,6 +62,16 @@ def moab_model(
     return next_state
 
 
+def calculate_plate_angles(prev_plate_angles, target_plate_angles):
+    """
+    Linearly accelerate the real plate angles to the target angles (plate angle
+    action output by the contoller).
+
+    TODO: do these calculations, for now we assume it happens instantly.
+    """
+    return target_plate_angles
+
+
 def uniform_circle(r: float) -> Tuple[float, float]:
     """Sample a point uniformly inside a circle with radius r."""
     angle = np.random.uniform(-np.pi, np.pi)
@@ -75,11 +87,13 @@ def uniform_circle(r: float) -> Tuple[float, float]:
 
 
 class MoabSim:
-    def __init__(self, config: Optional[dict] = None):
+    def __init__(self, config: Optional[Dict[str, float]] = None):
         self.state = np.array([0, 0, 0, 0], dtype=np.float32)
+        self.plate_angles = np.array([0, 0], dtype=np.float32)
 
         self.params = {
-            "dt": 0.045,  # in s, 45ms
+            "dt": 0.0333,  # in s, 33.3ms
+            "jitter": 0.004,  # in s, +/- 4ms
             "gravity": 9.81,  # m/s^2, Earth: there's no place like it.
             "plate_radius": 0.225 / 2,  # m, Moab: 225mm dia
             "ball_mass": 0.0027,  # kg, Ping-Pong ball: 2.7g
@@ -90,7 +104,7 @@ class MoabSim:
         if config is not None:
             self._overwrite_params(config)
 
-    def _overwrite_params(config: dict):
+    def _overwrite_params(self, config: Dict[str, float]):
         """
         If config exists, overwrite all values of self.params with the matching
         elements in config. (If the element doesn't exist in config, keep the
@@ -98,7 +112,7 @@ class MoabSim:
         """
         self.params = self.params | config
 
-    def reset(self, config: Optional[dict] = None) -> np.ndarray:
+    def reset(self, config: Optional[Dict[str, float]] = None) -> np.ndarray:
         if config is not None:
             self._overwrite_params(config)
 
@@ -108,5 +122,6 @@ class MoabSim:
         return self.state
 
     def step(self, action: np.ndarray) -> np.ndarray:
-        self.state = moab_model(self.state, action, **self.params)
+        self.plate_angles = calculate_plate_angles(self.plate_angles, action)
+        self.state = moab_model(self.state, self.plate_angles, **self.params)
         return self.state
