@@ -1,4 +1,3 @@
-main.py
 #!/usr/bin/env python3
 
 """
@@ -19,8 +18,9 @@ import random
 import sys
 import time
 import numpy as np
-from typing import Dict, Union
-from scipy.stats import truncnorm
+from typing import Dict, Union, Optional
+
+# from scipy.stats import truncnorm
 
 from dotenv import load_dotenv, set_key
 from microsoft_bonsai_api.simulator.client import BonsaiClient, BonsaiClientConfig
@@ -67,8 +67,8 @@ class MoabSimBonsai(MoabSim):
     def get_state(self) -> Dict[str, float]:
         """Return a dictionary with all the state and physics info."""
         d = self.params.copy()  # Make a copy
-        d["ball_x"], d["ball_y"], d["ball_x_vel"], d["ball_y_vel"] = self.state
-        d["ball_pitch"], d["ball_roll"] = self.plate_angles
+        d["ball_x"], d["ball_y"], d["ball_vel_x"], d["ball_vel_y"] = self.state
+        d["input_pitch"], d["input_roll"] = self.plate_angles
         return d
 
 
@@ -453,19 +453,19 @@ def main(
 
                     # stochastic delay, truncated normal distribution
                     if sim_speed_variance > 0:
-                        mu = sim_speed
-                        sigma = sim_speed_variance
-                        # truncating at min +/- 3*variance
-                        lower = np.max([0, sim_speed - 3 * sim_speed_variance])
-                        upper = sim_speed + 3 * sim_speed_variance
-                        delay = truncnorm.rvs(
-                            (lower - mu) / sigma,
-                            (upper - mu) / sigma,
-                            loc=mu,
-                            scale=sigma,
-                        )
+                        # mu = sim_speed
+                        # sigma = sim_speed_variance
+                        # # truncating at min +/- 3*variance
+                        # lower = np.max([0, sim_speed - 3 * sim_speed_variance])
+                        # upper = sim_speed + 3 * sim_speed_variance
+                        # delay = truncnorm.rvs(
+                        #     (lower - mu) / sigma,
+                        #     (upper - mu) / sigma,
+                        #     loc=mu,
+                        #     scale=sigma,
+                        # )
 
-                        print("stochastic sim delay: {}s".format(delay))
+                        # print("stochastic sim delay: {}s".format(delay))
                         time.sleep(delay)
 
                     else:  # fixed delay

@@ -6,9 +6,15 @@ from moab_env import MoabEnv, MoabDomainRandEnv
 def pid_controller(Kp=3.4, Ki=0.0227, Kd=20.455, **kwargs):
     sum_x, sum_y = 0, 0
 
-    def next_action(state):
+    def next_action(state: Dict[str, float]):
         nonlocal sum_x, sum_y
-        x, y, vel_x, vel_y = state["x"], state["y"], state["vel_x"], state["vel_y"]
+        print(state)
+        x, y, vel_x, vel_y = (
+            state["ball_x"],
+            state["ball_y"],
+            state["ball_vel_x"],
+            state["ball_vel_y"],
+        )
         sum_x += x
         sum_y += y
 
@@ -39,19 +45,19 @@ def brain_policy(
     return response.json()
 
 
-def main1(Kp=75, Ki=0.5, Kd=45):
-    env = MoabEnv()
-    state = env.reset()
-    controller = pid_controller(Kp, Ki, Kd)
-    print(state)
+# def main1(Kp=75, Ki=0.5, Kd=45):
+#     env = MoabEnv()
+#     state = env.reset()
+#     controller = pid_controller(Kp, Ki, Kd)
+#     print(state)
 
-    while True:
-        action = controller(state)
-        state, reward, done, info = env.step(action)
-        env.render()
-        print(state, reward, action, done)
-        # if done:
-        #     break
+#     while True:
+#         action = controller(state)
+#         state, reward, done, info = env.step(action)
+#         env.render()
+#         print(state, reward, action, done)
+#         # if done:
+#         #     break
 
 
 if __name__ == "__main__":
