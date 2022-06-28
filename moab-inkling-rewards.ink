@@ -65,7 +65,7 @@ type SimConfig {
     jitter: number, # Timestep jitter in (s), jitter>=0
     gravity: number, # Acceleration of gravity (s)
     plate_radius: number, # Radius of the plate in (m)
-    ball_mass: number, # Mass of ball in (kg)
+    ball_mass: number, # Mass of ballg in (kg)
     ball_radius: number, # Radius of the ball in (m)
     ball_shell: number, # Shell thickness of ball in (m), shell>0, shell<=radius
     max_starting_velocity: number,

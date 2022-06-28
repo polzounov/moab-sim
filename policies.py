@@ -1,4 +1,5 @@
 import numpy as np
+from typing import Dict
 from moab_env import MoabEnv, MoabDomainRandEnv
 
 
