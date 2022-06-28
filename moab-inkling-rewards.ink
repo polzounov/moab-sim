@@ -61,22 +61,14 @@ type SimAction {
 # Per-episode configuration that can be sent to the simulator.
 # All iterations within an episode will use the same configuration.
 type SimConfig {
-    # Model initial ball conditions
-    initial_x: number<-RadiusOfPlate .. RadiusOfPlate>, # in (m)
-    initial_y: number<-RadiusOfPlate .. RadiusOfPlate>,
-
-    # Model initial ball velocity conditions
-    initial_vel_x: number<-MaxInitialVelocity .. MaxInitialVelocity>, # in (m/s)
-    initial_vel_y: number<-MaxInitialVelocity .. MaxInitialVelocity>,
-
-    # Range -1 to 1 is a scaled value that represents
-    # the full plate rotation range supported by the hardware.
-    initial_pitch: number<-1 .. 1>,
-    initial_roll: number<-1 .. 1>,
-
+    dt: number, # Timestep length in (s), dt>0
+    jitter: number, # Timestep jitter in (s), jitter>=0
+    gravity: number, # Acceleration of gravity (s)
+    plate_radius: number, # Radius of the plate in (m)
+    ball_mass: number, # Mass of ball in (kg)
     ball_radius: number, # Radius of the ball in (m)
     ball_shell: number, # Shell thickness of ball in (m), shell>0, shell<=radius
-
+    max_starting_velocity: number,
 }
 
 
@@ -107,19 +99,15 @@ graph (input: ObservableState) {
             reward RewardFn
 
             training {
-                # Limit episodes to 250 iterations instead of the default 1000.
-                EpisodeIterationLimit: 250
+                # Limit episodes to 2048 iterations instead of the default 1000.
+                EpisodeIterationLimit: 2048
             }
 
             lesson `Randomize Start` {
                 # Specify the configuration parameters that should be varied
                 # from one episode to the next during this lesson.
                 scenario {
-                    initial_x: number<-RadiusOfPlate * 0.6 .. RadiusOfPlate * 0.6>,
-                    initial_y: number<-RadiusOfPlate * 0.6 .. RadiusOfPlate * 0.6>,
-
-                    initial_vel_x: number<-MaxInitialVelocity * 0.4 .. MaxInitialVelocity * 0.4>,
-                    initial_vel_y: number<-MaxInitialVelocity * 0.4 .. MaxInitialVelocity * 0.4>,
+                    max_starting_velocity: number<-MaxInitialVelocity * 0.4 .. MaxInitialVelocity * 0.4>,
 
                     initial_pitch: number<-0.2 .. 0.2>,
                     initial_roll: number<-0.2 .. 0.2>,
