@@ -77,6 +77,7 @@ class TemplateSimulatorSession:
         state = self.get_state()
         x, y = state["ball_x"], state["ball_y"]
         halted = np.sqrt(x**2 + y**2) > 0.95 * state["plate_radius"]
+        return halted | self.iteration_count >= self.max_iterations
 
     def episode_start(self, config: Dict[str, float] = None) -> None:
         """Initialize simulator environment using scenario paramters from inkling."""
