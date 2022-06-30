@@ -40,36 +40,60 @@ LOG_PATH = "logs"
 default_config = {}
 
 
-class MoabSimBonsai(MoabSim):
-    """Add Bonsai specific additions to the physics simulator"""
-
+class TemplateSimulatorSession:
     def __init__(
-        self, config: Optional[Dict[str, float]] = None, max_iterations: int = 2048
+        self,
+        render: bool = False,
+        env_name: str = "Moab",
+        max_iterations: int = 2048,
     ):
-        super(MoabSimBonsai, self).__init__(config)
+        """Simulator Interface with the Bonsai Platform
+
+        Parameters
+        ----------
+        render : bool, optional
+            Whether to visualize episodes during training, by default False
+        env_name : str, optional
+            Name of simulator interface, by default "Moab"
+        """
+        self.simulator = MoabSim()
+        self.count_view = False
+        self.env_name = env_name
+        self.render = render
+
         self.iteration_count = 0
         self.max_iterations = max_iterations
 
-    def reset(self, config: Optional[Dict[str, float]] = None) -> np.ndarray:
-        super(MoabSimBonsai, self).reset(config)
-        self.iteration_count = 0
-
-    def step(self, action: np.ndarray) -> np.ndarray:
-        state = super(MoabSimBonsai, self).step(action)
-        self.iteration_count += 1
-        return state
+    def get_state(self) -> Dict[str, float]:
+        """Extract current states from the simulator."""
+        d = self.simulator.params.copy()  # Make a copy
+        sim_state = self.simulator.state
+        d["ball_x"], d["ball_y"], d["ball_vel_x"], d["ball_vel_y"] = sim_state
+        d["input_pitch"], d["input_roll"] = self.simulator.plate_angles
+        return d
 
     def halted(self) -> bool:
-        x, y = self.state[:2]
-        halted = np.sqrt(x**2 + y**2) > 0.95 * self.params["plate_radius"]
-        return halted
+        """Halt current episode."""
+        state = self.get_state()
+        x, y = state["ball_x"], state["ball_y"]
+        halted = np.sqrt(x**2 + y**2) > 0.95 * state["plate_radius"]
 
-    def get_state(self) -> Dict[str, float]:
-        """Return a dictionary with all the state and physics info."""
-        d = self.params.copy()  # Make a copy
-        d["ball_x"], d["ball_y"], d["ball_vel_x"], d["ball_vel_y"] = self.state
-        d["input_pitch"], d["input_roll"] = self.plate_angles
-        return d
+    def episode_start(self, config: Dict[str, float] = None) -> None:
+        """Initialize simulator environment using scenario paramters from inkling."""
+        self.simulator.reset(config)
+        self.iteration_count = 0
+
+    def episode_step(self, action: Dict):
+        """Step through the environment for a single iteration."""
+        pitch, roll = action["command"]["input_pitch"], action["command"]["input_roll"]
+        self.simulator.step(np.array([pitch, roll], dtype=np.float32))
+        self.iteration_count += 1
+
+        if self.render:
+            self.sim_render()
+
+    def sim_render(self):
+        pass
 
 
 def ensure_log_dir(log_full_path):
@@ -86,48 +110,6 @@ def ensure_log_dir(log_full_path):
             )
         )
         logs_directory.mkdir(parents=True, exist_ok=True)
-
-
-class TemplateSimulatorSession:
-    def __init__(self, render: bool = False, env_name: str = "Moab"):
-        """Simulator Interface with the Bonsai Platform
-
-        Parameters
-        ----------
-        render : bool, optional
-            Whether to visualize episodes during training, by default False
-        env_name : str, optional
-            Name of simulator interface, by default "Moab"
-        """
-        self.simulator = MoabSimBonsai()
-        self.count_view = False
-        self.env_name = env_name
-        self.render = render
-
-    def get_state(self) -> Dict[str, float]:
-        """Extract current states from the simulator."""
-        return self.simulator.get_state()
-
-    def halted(self) -> bool:
-        """Halt current episode."""
-        return self.simulator.halted()
-
-    def episode_start(self, config: Dict[str, float] = None) -> None:
-        """Initialize simulator environment using scenario paramters from inkling."""
-        self.simulator.reset(config)
-
-    def log_iterations(self, *args, **kwargs):
-        pass
-
-    def episode_step(self, action: Dict):
-        """Step through the environment for a single iteration."""
-        pitch, roll = action["command"]["input_pitch"], action["command"]["input_roll"]
-        self.simulator.step(np.array([pitch, roll], dtype=np.float32))
-        # if self.render:
-        #     self.sim_render()
-
-    def sim_render(self):
-        pass
 
 
 def env_setup(env_file: str = ".env"):
@@ -346,42 +328,7 @@ def main(
                 # This updates the simulation state, which will be sent back in the next loop when
                 # client.session.advance is called.
                 iteration += 1
-
-                delay = 0.0
-                if sim_speed > 0:
-
-                    # stochastic delay, truncated normal distribution
-                    if sim_speed_variance > 0:
-                        # mu = sim_speed
-                        # sigma = sim_speed_variance
-                        # # truncating at min +/- 3*variance
-                        # lower = np.max([0, sim_speed - 3 * sim_speed_variance])
-                        # upper = sim_speed + 3 * sim_speed_variance
-                        # delay = truncnorm.rvs(
-                        #     (lower - mu) / sigma,
-                        #     (upper - mu) / sigma,
-                        #     loc=mu,
-                        #     scale=sigma,
-                        # )
-
-                        # print("stochastic sim delay: {}s".format(delay))
-                        time.sleep(delay)
-
-                    else:  # fixed delay
-                        delay = sim_speed
-                        print("sim delay: {}s".format(delay))
-                        time.sleep(delay)
-
                 sim.episode_step(event.episode_step.action)
-
-                if sim.log_data:
-                    sim.log_iterations(
-                        episode=episode,
-                        iteration=iteration,
-                        state=sim.get_state(),
-                        action=event.episode_step.action,
-                        sim_speed_delay=delay,
-                    )
 
             elif event.type == "EpisodeFinish":
                 print("Episode Finishing...")
