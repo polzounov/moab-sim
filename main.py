@@ -70,17 +70,17 @@ class TemplateSimulatorSession:
         sim_state = self.simulator.state
         d["ball_x"], d["ball_y"], d["ball_vel_x"], d["ball_vel_y"] = sim_state
         d["input_pitch"], d["input_roll"] = self.simulator.plate_angles
+        d["sim_halted"] = self.halted()
         return d
 
     def halted(self) -> bool:
         """Halt current episode."""
-        state = self.get_state()
-        x, y = state["ball_x"], state["ball_y"]
-        halted = np.sqrt(x**2 + y**2) > 0.95 * state["plate_radius"]
+        x, y, _, _ = self.simulator.state 
+        halted = np.sqrt(x**2 + y**2) > 0.95 * self.simulator.params["plate_radius"]
         return halted | self.iteration_count >= self.max_iterations
 
     def episode_start(self, config: Dict[str, float] = None) -> None:
-        """Initialize simulator environment using scenario paramters from inkling."""
+        """Initialize simulator environment using scenario parameters from inkling."""
         self.simulator.reset(config)
         self.iteration_count = 0
 
@@ -292,6 +292,7 @@ def main(
                 state=sim.get_state(),
                 halted=sim.halted(),
             )
+            print(sim_state)
             try:
                 event = client.session.advance(
                     workspace_name=config_client.workspace,
