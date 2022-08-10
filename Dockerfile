@@ -13,11 +13,13 @@ RUN apt-get update && \
 # Set up the simulator
 WORKDIR /sim
 
-# Copy simulator files to /sim
-COPY ./ /sim
+COPY requirements.txt /sim
 
 # Install simulator dependencies
 RUN pip3 install -r requirements.txt
+
+# Copy simulator files to /sim
+COPY main.py moab_interface.json policies.py moab_sim.py moab-inkling-rewards.ink /sim
 
 # This will be the command to run the simulator
 CMD ["python", "main.py"]

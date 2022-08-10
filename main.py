@@ -15,12 +15,15 @@ from microsoft_bonsai_api.simulator.generated.models import (
 from moab_sim import MoabSim
 from policies import random_policy, brain_policy
 
+ENABLE_RENDER = False
 try:
     # Only import these if using stuff locally
     import cv2
     import pygame
 
     pygame.init()
+    ENABLE_RENDER = True
+
 except:
     # In this case you're probably in a docker container on Azure
     pass
@@ -147,35 +150,36 @@ class MoabBonsaiSim:
         return self.get_state()
 
     def render_sim(self):
-        size = 800
-        if self._viewer is None:
-            self._viewer = pygame.display.set_mode((size, size))
-            self._clock = pygame.time.Clock()
+        if ENABLE_RENDER:
+            size = 800
+            if self._viewer is None:
+                self._viewer = pygame.display.set_mode((size, size))
+                self._clock = pygame.time.Clock()
 
-        # Shitty rendering of moab
-        x, y, _, _ = sim_state = self.simulator.state
-        img = np.zeros((size, size, 3), dtype=np.uint8)
-        center = (int(size / 2), int(size / 2))
-        scaling = (size / 2) / 0.2  # plate take up halfish of the frame
+            # Shitty rendering of moab
+            x, y, _, _ = sim_state = self.simulator.state
+            img = np.zeros((size, size, 3), dtype=np.uint8)
+            center = (int(size / 2), int(size / 2))
+            scaling = (size / 2) / 0.2  # plate take up halfish of the frame
 
-        # plate
-        plate_radius_pix = int(0.1125 * scaling)
-        img = cv2.circle(img, center, plate_radius_pix, (100, 100, 100), -1)
+            # plate
+            plate_radius_pix = int(0.1125 * scaling)
+            img = cv2.circle(img, center, plate_radius_pix, (100, 100, 100), -1)
 
-        # fmt:off
-        # ball
-        ball_radius_pix = int(0.020 * scaling)
-        ball_x_pix, ball_y_pix = center[0] + int(x * scaling), center[1] - int(y * scaling)
-        img = cv2.circle(img, (ball_x_pix, ball_y_pix), ball_radius_pix, (255, 165, 0), -1)
-        # fmt: on
+            # fmt:off
+            # ball
+            ball_radius_pix = int(0.020 * scaling)
+            ball_x_pix, ball_y_pix = center[0] + int(x * scaling), center[1] - int(y * scaling)
+            img = cv2.circle(img, (ball_x_pix, ball_y_pix), ball_radius_pix, (255, 165, 0), -1)
+            # fmt: on
 
-        pg_img = pygame.image.frombuffer(img.tobytes(), img.shape[1::-1], "RGB")
-        self._viewer.blit(pg_img, (0, 0))
-        pygame.display.update()
-        # sleep(DELTA_T)
-        self._clock.tick(10)
+            pg_img = pygame.image.frombuffer(img.tobytes(), img.shape[1::-1], "RGB")
+            self._viewer.blit(pg_img, (0, 0))
+            pygame.display.update()
+            # sleep(DELTA_T)
+            self._clock.tick(10)
 
-        return img
+            return img
 
 
 if __name__ == "__main__":

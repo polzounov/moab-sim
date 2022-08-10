@@ -1,6 +1,5 @@
 import numpy as np
 from typing import Dict
-from moab_env import MoabEnv, MoabDomainRandEnv
 
 
 def pid_controller(Kp=3.4, Ki=0.0227, Kd=20.455, **kwargs):
@@ -43,23 +42,3 @@ def brain_policy(
     response = requests.get(prediction_endpoint, json=state)
 
     return response.json()
-
-
-# def main1(Kp=75, Ki=0.5, Kd=45):
-#     env = MoabEnv()
-#     state = env.reset()
-#     controller = pid_controller(Kp, Ki, Kd)
-#     print(state)
-
-#     while True:
-#         action = controller(state)
-#         state, reward, done, info = env.step(action)
-#         env.render()
-#         print(state, reward, action, done)
-#         # if done:
-#         #     break
-
-
-if __name__ == "__main__":
-    pass
-    # main1(Kp=75, Ki=0.5, Kd=45)
