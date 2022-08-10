@@ -50,17 +50,16 @@ def main(simulator_name, render, max_iterations, workspace=None, accesskey=None)
     sequence_id = 1
     sim_model = MoabBonsaiSim(render=render, max_iterations=max_iterations)
     sim_model_state = sim_model.reset()
-    sim_model_state["sim_halted"] = False
 
     try:
         while True:
-            halted = sim_model.done()
-            sim_model_state["sim_halted"] = halted
+            done = sim_model.done()
+            print("Halted is:", done)
 
             sim_state = SimulatorState(
                 sequence_id=sequence_id,
                 state=sim_model_state,
-                halted=halted,
+                halted=done,
             )
             event = client.session.advance(
                 workspace_name=config_client.workspace,
@@ -85,6 +84,7 @@ def main(simulator_name, render, max_iterations, workspace=None, accesskey=None)
                 return
 
     except BaseException as err:
+        # Gracefully unregister for any other exceptions
         client.session.delete(
             workspace_name=config_client.workspace,
             session_id=registered_session.session_id,
@@ -126,8 +126,12 @@ class MoabBonsaiSim:
     def done(self) -> bool:
         state = self.get_state()
         x, y = state["ball_x"], state["ball_y"]
-        halted = np.sqrt(x**2 + y**2) > 0.95 * state["plate_radius"]
-        return halted | self.iteration_count >= self.max_iterations
+        out_of_bounds = np.sqrt(x**2 + y**2) > 0.95 * state["plate_radius"]
+        too_many_iters = self.iteration_count >= self.max_iterations
+        print(
+            f"too_many_iters: {too_many_iters}, iters: {self.iteration_count}, oob: {out_of_bounds}"
+        )
+        return out_of_bounds or too_many_iters
 
     def reset(self, config: Dict[str, float] = None) -> Dict[str, float]:
         """Initialize simulator environment using scenario parameters from inkling."""
