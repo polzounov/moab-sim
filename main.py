@@ -1,7 +1,5 @@
 import os
-import cv2
 import time
-import pygame
 import numpy as np
 
 from functools import partial
@@ -17,8 +15,15 @@ from microsoft_bonsai_api.simulator.generated.models import (
 from moab_sim import MoabSim
 from policies import random_policy, brain_policy
 
+try:
+    # Only import these if using stuff locally
+    import cv2
+    import pygame
 
-pygame.init()
+    pygame.init()
+except:
+    # In this case your probably in a docker container on Azure
+    pass
 
 
 def main(simulator_name, render, max_iterations, workspace=None, accesskey=None):
