@@ -1,6 +1,6 @@
 {
     "$schema": "https://raw.githubusercontent.com/microsoft/microsoft-bonsai-api/main/Reference/siminterface.schema.json",
-    "name": "moab",
+    "name": "moabpython",
     "timeout": 60,
     "description": {
         "config": {
@@ -10,59 +10,59 @@
                     "name": "dt",
                     "type": {
                         "category": "Number",
-                        "comment": "Timestep length in s, 33.3ms (default is 0.0333s)",
-                    },
+                        "comment": "Timestep length in s, 33.3ms (default is 0.0333s)"
+                    }
                 },
                 {
                     "name": "jitter",
                     "type": {
                         "category": "Number",
-                        "comment": "Jitter in s, +/- 4ms (default is 0.004s)",
-                    },
+                        "comment": "Jitter in s, +/- 4ms (default is 0.004s)"
+                    }
                 },
                 {
                     "name": "gravity",
                     "type": {
                         "category": "Number",
-                        "comment": "Gravity in m/s^2, (default is 9.81 m/s^2)",
-                    },
+                        "comment": "Gravity in m/s^2, (default is 9.81 m/s^2)"
+                    }
                 },
                 {
                     "name": "plate_radius",
                     "type": {
                         "category": "Number",
-                        "comment": "Radius of plate in m, Moab: 225mm dia (default is 0.1125m)",
-                    },
+                        "comment": "Radius of plate in m, Moab: 225mm dia (default is 0.1125m)"
+                    }
                 },
                 {
                     "name": "ball_mass",
                     "type": {
                         "category": "Number",
-                        "comment": "Mass of ball in kg, Ping-Pong ball: 2.7g (default is 0.0027kg)",
-                    },
+                        "comment": "Mass of ball in kg, Ping-Pong ball: 2.7g (default is 0.0027kg)"
+                    }
                 },
                 {
                     "name": "ball_radius",
                     "type": {
                         "category": "Number",
-                        "comment": "Radius of ball in m, Ping-Pong ball: 20mm (default is 0.02m)",
-                    },
+                        "comment": "Radius of ball in m, Ping-Pong ball: 20mm (default is 0.02m)"
+                    }
                 },
                 {
                     "name": "ball_shell",
                     "type": {
                         "category": "Number",
-                        "comment": "Thickness of ball shell in m, Ping-Pong ball: 0.2mm (default is 0.0002m)",
-                    },
+                        "comment": "Thickness of ball shell in m, Ping-Pong ball: 0.2mm (default is 0.0002m)"
+                    }
                 },
                 {
                     "name": "max_starting_velocity",
                     "type": {
                         "category": "Number",
-                        "comment": "Maximum starting velocity of the ball in m/s, Ping-Pong ball: 1.0m/s (default is 1.0m/s)",
-                    },
-                },
-            ],
+                        "comment": "Maximum starting velocity of the ball in m/s, Ping-Pong ball: 1.0m/s (default is 1.0m/s)"
+                    }
+                }
+            ]
         },
         "action": {
             "category": "Struct",
@@ -92,21 +92,21 @@
             "fields": [
                 {
                     "name": "ball_x",
-                    "type": {"category": "Number", "comment": "(m)"},
+                    "type": {"category": "Number", "comment": "(m)"}
                 },
                 {
                     "name": "ball_y",
-                    "type": {"category": "Number", "comment": "(m)"},
+                    "type": {"category": "Number", "comment": "(m)"}
                 },
                 {
                     "name": "ball_vel_x",
-                    "type": {"category": "Number", "comment": "(m/s)"},
+                    "type": {"category": "Number", "comment": "(m/s)"}
                 },
                 {
                     "name": "ball_vel_y",
-                    "type": {"category": "Number", "comment": "(m/s)"},
+                    "type": {"category": "Number", "comment": "(m/s)"}
                 }
-            ],
-        },
-    },
+            ]
+        }
+    }
 }
