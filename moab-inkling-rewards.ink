@@ -81,6 +81,11 @@ function RewardFn(State: ObservableState): number {
     }
 }
 
+function TerminalFn(State: ObservableState) {
+    var norm_dist = (Math.Sqrt(State.ball_x*State.ball_x + State.ball_y*State.ball_y) / RadiusOfPlate)
+    return norm_dist > 0.95
+}
+
 
 # Define a concept graph with a single concept
 graph (input: ObservableState) {
@@ -97,6 +102,7 @@ graph (input: ObservableState) {
             }
 
             reward RewardFn
+            terminal TerminalFn
 
             training {
                 # Limit episodes to 2048 iterations instead of the default 1000.
