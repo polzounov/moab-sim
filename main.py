@@ -15,6 +15,7 @@ from microsoft_bonsai_api.simulator.generated.models import (
 from moab_sim import MoabSim
 from policies import random_policy, brain_policy
 
+
 ENABLE_RENDER = False
 try:
     # Only import these if using stuff locally
@@ -29,16 +30,16 @@ except:
     pass
 
 
-def main(simulator_name, render, max_iterations, workspace=None, accesskey=None):
+def main(render, max_iterations):
     # Get workspace and accesskey from env if not passed
-    workspace = workspace or os.getenv("SIM_WORKSPACE")
-    accesskey = accesskey or os.getenv("SIM_ACCESS_KEY")
+    workspace = os.getenv("SIM_WORKSPACE")
+    accesskey = os.getenv("SIM_ACCESS_KEY")
 
     config_client = BonsaiClientConfig()
     client = BonsaiClient(config_client)
 
     registration_info = SimulatorInterface(
-        name=simulator_name,
+        name="Moab",
         timeout=60,
         simulator_context=config_client.simulator_context,
         description=None,
@@ -51,7 +52,7 @@ def main(simulator_name, render, max_iterations, workspace=None, accesskey=None)
     print(f"Registered simulator. {registered_session.session_id}")
 
     sequence_id = 1
-    sim_model = MoabBonsaiSim(render=render, max_iterations=max_iterations)
+    sim_model = MoabBonsaiSim(render=render)
     sim_model_state = sim_model.reset()
 
     try:
@@ -116,10 +117,17 @@ class MoabBonsaiSim:
     def get_state(self) -> Dict[str, float]:
         """Extract current states from the simulator."""
         d = self.simulator.params.copy()  # Make a copy
-        sim_state = [float(el) for el in self.simulator.state]
-        d["ball_x"], d["ball_y"], d["ball_vel_x"], d["ball_vel_y"] = sim_state
-        plate_angles = [float(el) for el in self.simulator.plate_angles]
-        d["input_pitch"], d["input_roll"] = plate_angles
+
+        # Extract state and action and ensure they are native python floats
+        x, y, vel_x, vel_y = self.simulator.state
+        pitch, roll = self.simulator.plate_angles
+        x, y = float(x), float(y)
+        vel_x, vel_y = float(vel_x), float(vel_y)
+        pitch, roll = float(pitch), float(roll)
+
+        d["ball_x"], d["ball_y"] = x, y
+        d["ball_vel_x"], d["ball_vel_y"] = vel_x, vel_y
+        d["input_pitch"], d["input_roll"] = pitch, roll
 
         return d
 
@@ -139,7 +147,6 @@ class MoabBonsaiSim:
 
     def step(self, action: Dict) -> Dict[str, float]:
         """Step through the environment for a single iteration."""
-        # pitch, roll = action["command"]["input_pitch"], action["command"]["input_roll"]
         pitch, roll = action["input_pitch"], action["input_roll"]
         sim_state = self.simulator.step(np.array([pitch, roll], dtype=np.float32))
         self.iteration_count += 1
@@ -156,7 +163,7 @@ class MoabBonsaiSim:
                 self._viewer = pygame.display.set_mode((size, size))
                 self._clock = pygame.time.Clock()
 
-            # Shitty rendering of moab
+            # Very simple and hacky rendering of moab
             x, y, _, _ = sim_state = self.simulator.state
             img = np.zeros((size, size, 3), dtype=np.uint8)
             center = (int(size / 2), int(size / 2))
@@ -176,7 +183,6 @@ class MoabBonsaiSim:
             pg_img = pygame.image.frombuffer(img.tobytes(), img.shape[1::-1], "RGB")
             self._viewer.blit(pg_img, (0, 0))
             pygame.display.update()
-            # sleep(DELTA_T)
             self._clock.tick(10)
 
             return img
@@ -188,46 +194,12 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(description="Bonsai and Simulator Integration...")
     parser.add_argument(
-        "--sim-name",
-        type=str,
-        metavar="SIMULATOR NAME",
-        default="Moab",
-        help="Simulator name to use registering with the platform",
-    )
-    parser.add_argument(
         "-r",
         "--render",
         action="store_true",
         default=False,
         help="Render training episodes",
     )
-    parser.add_argument(
-        "--iteration-limit",
-        type=int,
-        metavar="EPISODE_ITERATIONS",
-        help="Episode iteration limit when running local test.",
-        default=2048,
-    )
-    parser.add_argument(
-        "--workspace",
-        type=str,
-        metavar="WORKSPACE ID",
-        help="your workspace id",
-        default=None,
-    )
-    parser.add_argument(
-        "--accesskey",
-        type=str,
-        metavar="Your Bonsai workspace access-key",
-        help="your bonsai workspace access key",
-        default=None,
-    )
 
     args, _ = parser.parse_known_args()
-    main(
-        simulator_name=args.sim_name,
-        render=args.render,
-        max_iterations=args.iteration_limit,
-        workspace=args.workspace,
-        accesskey=args.accesskey,
-    )
+    main(args.render)
