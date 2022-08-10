@@ -30,7 +30,7 @@ except:
     pass
 
 
-def main(render, max_iterations):
+def main(render):
     # Get workspace and accesskey from env if not passed
     workspace = os.getenv("SIM_WORKSPACE")
     accesskey = os.getenv("SIM_ACCESS_KEY")
