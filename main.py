@@ -22,7 +22,7 @@ try:
 
     pygame.init()
 except:
-    # In this case your probably in a docker container on Azure
+    # In this case you're probably in a docker container on Azure
     pass
 
 
