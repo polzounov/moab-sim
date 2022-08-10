@@ -2,31 +2,6 @@ import numpy as np
 from typing import Dict, Tuple, Optional
 
 
-"""
-    from scipy.integrate import odeint
-
-    def diff_moab_model(state, action, gravity, ball_radius, ball_shell, **kwargs):
-        h = ball_radius - ball_shell  # hollow radius
-        r = ball_radius
-
-        # Ball intertia for a hollow sphere is:
-        # I = (2 / 5) * m * ((r**5 - h**5) / (r**3 - h**3))
-        # Equations for acceleration on a plate at rest
-        # a = (theta * m * g) / (m + (I / r**2))
-        # Simplify:
-        x_dot_dot, y_dot_dot = action * gravity / (
-            1 + (2 / 5) * ((r**5 - h**5) / (r**3 - h**3)) / (r**2)
-        )
-        _, _, x_dot, y_dot = state
-        return np.array([x_dot, y_dot, x_dot_dot, y_dot_dot])
-
-    def forward_model_ode(state, action, dt):
-    diff_model = lambda s, a: self.diff_moab_model(s, a, **self.params)
-    t = np.linspace(0.0, dt, 2)
-    return np.array(odeint(self.diff_moab_model, state, t, args=(action, dt)))[1, :]
-"""
-
-
 def moab_model(
     state: np.ndarray,
     action: np.ndarray,

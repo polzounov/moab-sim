@@ -72,8 +72,8 @@ type SimConfig {
 }
 
 
-function RewardFn(State: SimState): number {  
-    var reward = 1 - (Math.sqrt(State.ball_x*State.ball_x + State.ball_y*State.ball_y) / RadiusOfPlate)
+function RewardFn(State: ObservableState): number {  
+    var reward = 1 - (Math.Sqrt(State.ball_x*State.ball_x + State.ball_y*State.ball_y) / RadiusOfPlate)
     if (reward < 0.9) {
         return reward
     } else {
@@ -108,9 +108,6 @@ graph (input: ObservableState) {
                 # from one episode to the next during this lesson.
                 scenario {
                     max_starting_velocity: number<-MaxInitialVelocity * 0.4 .. MaxInitialVelocity * 0.4>,
-
-                    initial_pitch: number<-0.2 .. 0.2>,
-                    initial_roll: number<-0.2 .. 0.2>,
 
                     ball_radius: number<PingPongRadius * 0.8 .. PingPongRadius * 1.2>,
                     ball_shell: number<PingPongShell * 0.8 .. PingPongShell * 1.2>,

@@ -67,9 +67,15 @@ class TemplateSimulatorSession:
     def get_state(self) -> Dict[str, float]:
         """Extract current states from the simulator."""
         d = self.simulator.params.copy()  # Make a copy
-        sim_state = self.simulator.state
+
+        # sim_state = self.simulator.state
+        sim_state = [float(el) for el in self.simulator.state]
         d["ball_x"], d["ball_y"], d["ball_vel_x"], d["ball_vel_y"] = sim_state
-        d["input_pitch"], d["input_roll"] = self.simulator.plate_angles
+
+        # plate_angles = self.simulator.plate_angles
+        plate_angles = [float(el) for el in self.simulator.plate_angles]
+        d["input_pitch"], d["input_roll"] = plate_angles
+
         return d
 
     def halted(self) -> bool:
@@ -80,7 +86,7 @@ class TemplateSimulatorSession:
         return halted | self.iteration_count >= self.max_iterations
 
     def episode_start(self, config: Dict[str, float] = None) -> None:
-        """Initialize simulator environment using scenario paramters from inkling."""
+        """Initialize simulator environment using scenario parameters from inkling."""
         self.simulator.reset(config)
         self.iteration_count = 0
 
