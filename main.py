@@ -53,13 +53,10 @@ def main(simulator_name, render, max_iterations, workspace=None, accesskey=None)
 
     try:
         while True:
-            done = sim_model.done()
-            print("Halted is:", done)
-
             sim_state = SimulatorState(
                 sequence_id=sequence_id,
                 state=sim_model_state,
-                halted=done,
+                halted=sim_model.done(),
             )
             event = client.session.advance(
                 workspace_name=config_client.workspace,
@@ -128,9 +125,6 @@ class MoabBonsaiSim:
         x, y = state["ball_x"], state["ball_y"]
         out_of_bounds = np.sqrt(x**2 + y**2) > 0.95 * state["plate_radius"]
         too_many_iters = self.iteration_count >= self.max_iterations
-        print(
-            f"too_many_iters: {too_many_iters}, iters: {self.iteration_count}, oob: {out_of_bounds}"
-        )
         return out_of_bounds or too_many_iters
 
     def reset(self, config: Dict[str, float] = None) -> Dict[str, float]:
