@@ -19,7 +19,7 @@ COPY requirements.txt /sim
 RUN pip3 install -r requirements.txt
 
 # Copy simulator files to /sim
-COPY main.py moab_interface.json policies.py moab_sim.py moab-inkling-rewards.ink /sim
+COPY main.py moab_interface.json moab_sim.py moab-inkling-rewards.ink /sim
 
 # This will be the command to run the simulator
 CMD ["python", "main.py"]

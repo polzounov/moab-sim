@@ -105,6 +105,26 @@
                 {
                     "name": "ball_vel_y",
                     "type": {"category": "Number", "comment": "(m/s)"}
+                },
+                {
+                    "name": "roll",
+                    "type": {"category": "Number",  "start": -1,  "stop": 1, "comment": "Current roll control [-1..1]"}
+                },
+                {
+                    "name": "pitch",
+                    "type": {"category": "Number",  "start": -1,  "stop": 1, "comment": "Current pitch control [-1..1]"}
+                },
+                {
+                  "name": "plate_nor_x",
+                  "type": { "category": "Number", "comment": "Current plate X normal (unitless)"}
+                },
+                {
+                  "name": "plate_nor_y",
+                  "type": { "category": "Number", "comment": "Current plate Y normal (unitless)"}
+                },
+                {
+                  "name": "plate_nor_z",
+                  "type": { "category": "Number", "comment": "Current plate Z normal (unitless)"}
                 }
             ]
         }

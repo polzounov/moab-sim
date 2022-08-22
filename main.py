@@ -13,8 +13,6 @@ from microsoft_bonsai_api.simulator.generated.models import (
 )
 
 from moab_sim import MoabSim
-from policies import random_policy, brain_policy
-
 
 ENABLE_RENDER = False
 try:
@@ -127,7 +125,12 @@ class MoabBonsaiSim:
 
         d["ball_x"], d["ball_y"] = x, y
         d["ball_vel_x"], d["ball_vel_y"] = vel_x, vel_y
-        d["input_pitch"], d["input_roll"] = pitch, roll
+        d["pitch"], d["roll"] = pitch, roll
+
+        # Calculate the plate normal. TODO: double check the math
+        d["plate_nor_x"] = float(np.cos(np.radians(pitch)) * np.sin(np.radians(roll)))
+        d["plate_nor_y"] = float(np.sin(np.radians(pitch)) * np.cos(np.radians(roll)))
+        d["plate_nor_z"] = float(np.cos(np.radians(pitch)) * np.cos(np.radians(roll)))
 
         return d
 
