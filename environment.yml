@@ -13,4 +13,5 @@ dependencies:
     - opencv-python
     - pygame
     - stable-baselines3
+    - git+https://github.com/polzounov/stable-baselines3-contrib.git
     - torch
