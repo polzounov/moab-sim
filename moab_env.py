@@ -18,9 +18,7 @@ class MoabEnv(Env):
     def __init__(self, max_iterations=2048):
         act_max = np.asarray([1, 1], dtype=np.float32)
         plate_radius = 0.1125
-        obs_max = np.asarray(
-            [plate_radius, plate_radius, np.inf, np.inf], dtype=np.float32
-        )
+        obs_max = np.asarray([plate_radius, plate_radius, np.inf, np.inf], dtype=np.float32)
         self.observation_space = spaces.Box(-obs_max, obs_max)
         self.action_space = spaces.Box(-act_max, act_max)
 
@@ -41,13 +39,13 @@ class MoabEnv(Env):
 
     def done(self) -> bool:
         x, y = self.state[:2]
-        halted = np.sqrt(x**2 + y**2) > 0.95 * self.sim.params["plate_radius"]
+        halted = np.sqrt(x**2 + y**2) > 0.95 * self.sim.params["plate_radius"]()
         halted |= self.iteration_count >= self.max_iterations
         return halted
 
     def reward(self) -> float:
         x, y, vel_x, vel_y = self.state
-        norm_dist = np.sqrt(x**2 + y**2) / self.sim.params["plate_radius"]
+        norm_dist = np.sqrt(x**2 + y**2) / self.sim.params["plate_radius"]()
         reward = 1 - norm_dist
         return reward
 
@@ -89,19 +87,21 @@ class MoabEnv(Env):
 
 
 class MoabDomainRandEnv(MoabEnv):
-    def reset(self):
+    def __init__(self, max_iterations=2048, dr_params={}):
+        super(MoabDomainRandEnv, self).__init__(max_iterations=max_iterations)
+
         # defaults for all physics params
         d_g, d_pr, d_bm, d_br, d_bs, d_msv = 9.81, 0.1125, 0.0027, 0.02, 0.0002, 1.0
+        self.g = dr_params.get("g") or np.random.uniform(d_g * 0.67, d_g * 1.5)
+        self.pr = dr_params.get("pr") or np.random.uniform(d_pr * 0.67, d_pr * 1.5)
+        self.bm = dr_params.get("bm") or np.random.uniform(d_bm * 0.67, d_bm * 1.5)
+        self.br = dr_params.get("br") or np.random.uniform(d_br * 0.67, d_br * 1.5)
+        self.bs = dr_params.get("bs") or np.random.uniform(d_bs * 0.67, d_bs * 1.5)
+        self.msv = dr_params.get("msv") or np.random.uniform(d_msv * 0.67, d_msv * 1.5)
 
-        dr_config = {
-            "gravity": np.random.uniform(d_g * 0.67, d_g * 1.5),
-            "plate_radius": np.random.uniform(d_pr * 0.67, d_pr * 1.5),
-            "ball_mass": np.random.uniform(d_bm * 0.67, d_bm * 1.5),
-            "ball_radius": np.random.uniform(d_br * 0.67, d_br * 1.5),
-            "ball_shell": np.random.uniform(d_bs * 0.67, d_bs * 1.5),
-            "max_starting_velocity": np.random.uniform(d_msv * 0.67, d_msv * 1.5),
-        }
+        self.dr_config = {"g": self.g, "pr": self.pr, "bm": self.bm, "br": self.br, "bs": self.bs, "msv": self.msv}
 
+    def reset(self):
         self.iteration_count = 0
-        self.state = self.sim.reset(config=dr_config)
+        self.state = self.sim.reset(config=self.dr_config)
         return self.state
