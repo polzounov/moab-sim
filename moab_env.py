@@ -15,13 +15,14 @@ pygame.init()
 class MoabEnv(Env):
     metadata = {"render.modes": ["human"]}
 
-    def __init__(self, max_iterations=2048):
+    def __init__(self, max_iterations=2048, max_plate_angle=22):
         act_max = np.asarray([1, 1], dtype=np.float32)
         plate_radius = 0.1125
         obs_max = np.asarray([plate_radius, plate_radius, np.inf, np.inf], dtype=np.float32)
         self.observation_space = spaces.Box(-obs_max, obs_max)
         self.action_space = spaces.Box(-act_max, act_max)
 
+        self.max_plate_angle = max_plate_angle
         self.iteration_count = 0
         self.max_iterations = max_iterations
 
@@ -50,6 +51,7 @@ class MoabEnv(Env):
         return reward
 
     def step(self, action):
+        action_radians = np.asarray(action) * np.radians(self.max_plate_angle)
         self.state = self.sim.step(action)
         self.iteration_count += 1
         return self.state, self.reward(), self.done(), {}
@@ -99,7 +101,14 @@ class MoabDomainRandEnv(MoabEnv):
         self.bs = dr_params.get("bs") or np.random.uniform(d_bs * 0.67, d_bs * 1.5)
         self.msv = dr_params.get("msv") or np.random.uniform(d_msv * 0.67, d_msv * 1.5)
 
-        self.dr_config = {"g": self.g, "pr": self.pr, "bm": self.bm, "br": self.br, "bs": self.bs, "msv": self.msv}
+        self.dr_config = {
+            "g": self.g,
+            "pr": self.pr,
+            "bm": self.bm,
+            "br": self.br,
+            "bs": self.bs,
+            "msv": self.msv,
+        }
 
     def reset(self):
         self.iteration_count = 0
