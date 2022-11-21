@@ -108,18 +108,18 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
     # parser.add_argument("--logs", default="./logs", type=str)
-    parser.add_argument("-n", "--num-timesteps", default=1_000_000, type=float)
+    parser.add_argument("-n", "--num-timesteps", default=1_500_000, type=float)
     args, _ = parser.parse_known_args()
 
     num_timesteps = int(args.num_timesteps)
 
     runs = {
-        "reference-no-lstm-no-dr" "reference-no-dr": {"env_name": "MoabEnv", "lstm": False},
+        # "reference-no-lstm-no-dr" "reference-no-dr": {"env_name": "MoabEnv", "lstm": False},
         "reference-no-dr" "reference-no-dr": {"env_name": "MoabEnv"},
         "dr": {},
         "dr-no-reset": {"reset_hidden": False},
-        "dr-critic-no-lstm": {"enable_critic_lstm": False},
-        "dr-critic-shared-lstm": {"shared_lstm": True, "enable_critic_lstm": False},
+        # "dr-critic-no-lstm": {"enable_critic_lstm": False},
+        # "dr-critic-shared-lstm": {"shared_lstm": True, "enable_critic_lstm": False},
     }
 
     for run_name, params in runs.items():
