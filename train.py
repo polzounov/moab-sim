@@ -45,8 +45,18 @@ def train(
             "lstm_kwargs": None,
         }
 
-        model = RecurrentPPO("MlpLstmPolicy", env, verbose=1, tensorboard_log=tb_path, policy_kwargs=policy_params)
-        model.learn(total_timesteps=num_timesteps, callback=checkpoint_callback, tb_log_name="first_run")
+        model = RecurrentPPO(
+            "MlpLstmPolicy",
+            env,
+            verbose=1,
+            tensorboard_log=tb_path,
+            policy_kwargs=policy_params,
+        )
+        model.learn(
+            total_timesteps=num_timesteps,
+            callback=checkpoint_callback,
+            tb_log_name="first_run",
+        )
         model.save(save_path + "/trained_moab")
 
     else:
@@ -68,8 +78,18 @@ def train(
             # optimizer_kwargs: Optional[Dict[str, Any]] = None
         }
 
-        model = PPO("MlpPolicy", env, verbose=1, tensorboard_log=tb_path, policy_kwargs=policy_params)
-        model.learn(total_timesteps=num_timesteps, callback=checkpoint_callback, tb_log_name="first_run")
+        model = PPO(
+            "MlpPolicy",
+            env,
+            verbose=1,
+            tensorboard_log=tb_path,
+            policy_kwargs=policy_params,
+        )
+        model.learn(
+            total_timesteps=num_timesteps,
+            callback=checkpoint_callback,
+            tb_log_name="first_run",
+        )
         model.save(save_path + "/trained_moab")
 
     if play_when_done:
@@ -114,10 +134,11 @@ if __name__ == "__main__":
     num_timesteps = int(args.num_timesteps)
 
     runs = {
-        # "reference-no-lstm-no-dr" "reference-no-dr": {"env_name": "MoabEnv", "lstm": False},
-        "reference-no-dr" "reference-no-dr": {"env_name": "MoabEnv"},
-        "dr": {},
-        "dr-no-reset": {"reset_hidden": False},
+        "reference-no-lstm": {"lstm": False},
+        # "reference-no-lstm-no-dr": {"env_name": "MoabEnv", "lstm": False},
+        # "reference-no-dr": {"env_name": "MoabEnv"},
+        # "dr": {},
+        # "dr-no-reset": {"reset_hidden": False},
         # "dr-critic-no-lstm": {"enable_critic_lstm": False},
         # "dr-critic-shared-lstm": {"shared_lstm": True, "enable_critic_lstm": False},
     }

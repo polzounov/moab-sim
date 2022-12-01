@@ -1,0 +1,10 @@
+version: "3"
+services:
+
+  brain:
+    image: moab/brain
+    container_name: brain1
+    stop_grace_period: 0s
+    ports: [ 5555:5555 ]
+    # cmd: ["/usr/local/bin/predict", "-p", "5555", "-m", "/saved_model.tflite", "-b", "/brain.pb"]
+

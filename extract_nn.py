@@ -13,4 +13,13 @@ w1 = mlp_extractor_weights["2.weight"].numpy()
 b1 = mlp_extractor_weights["2.bias"].numpy()
 w_out = model.policy._modules["action_net"].weight.detach().numpy()
 
-np.savez(sys.argv[1] + "_numpy_weights.npz", w0=w0, b0=b0, w1=w1, b1=b1, w_out=w_out)
+if len(sys.argv) > 1:
+    filename_split = sys.argv[2].split(".")
+    filename_split = filename_split[:-1] if len(filename_split) > 1 else filename_split
+    filepath = "".join(filename_split) + ".npz"
+else:
+    filename_split = sys.argv[1].split(".")
+    filename_split = filename_split[:-1] if len(filename_split) > 1 else filename_split
+    filepath = "".join(filename_split) + "_np_weights.npz"
+
+np.savez(filepath, w0=w0, b0=b0, w1=w1, b1=b1, w_out=w_out)

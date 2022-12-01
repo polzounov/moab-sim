@@ -1,5 +1,6 @@
 import os
 import time
+import traceback
 import numpy as np
 
 from functools import partial
@@ -13,6 +14,7 @@ from microsoft_bonsai_api.simulator.generated.models import (
 )
 
 from moab_sim import MoabSim
+
 
 ENABLE_RENDER = False
 try:
@@ -37,7 +39,7 @@ def main(render):
     client = BonsaiClient(config_client)
 
     registration_info = SimulatorInterface(
-        name="Moab",
+        name="Moab-py",
         timeout=60,
         simulator_context=config_client.simulator_context,
         description=None,
@@ -66,7 +68,6 @@ def main(render):
                 body=sim_state,
             )
             sequence_id = event.sequence_id
-
             if event.type == "Idle":
                 time.sleep(event.idle.callback_time)
             elif event.type == "EpisodeStart":
@@ -89,6 +90,7 @@ def main(render):
             session_id=registered_session.session_id,
         )
         print(f"Unregistered simulator because {type(err).__name__}: {err}")
+        traceback.print_exc()
 
 
 class MoabBonsaiSim:

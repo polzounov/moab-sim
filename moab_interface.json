@@ -1,6 +1,6 @@
 {
     "$schema": "https://raw.githubusercontent.com/microsoft/microsoft-bonsai-api/main/Reference/siminterface.schema.json",
-    "name": "moabpython",
+    "name": "Moab-py",
     "timeout": 60,
     "description": {
         "config": {
