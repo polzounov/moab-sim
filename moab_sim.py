@@ -12,11 +12,11 @@ def moab_model(
     ball_shell: float = lambda: 0.0002,
     **kwargs
 ) -> np.ndarray:
-    # fmt: off
     r = ball_radius
     h = ball_radius - ball_shell  # hollow radius
     dt += np.random.uniform(-jitter, jitter)  # add jitter to the simulation timesteps
 
+    # fmt: off
     # Ball intertia for a hollow sphere is:
     # I = (2 / 5) * m * ((r**5 - h**5) / (r**3 - h**3))
     # Equations for acceleration on a plate at rest
@@ -26,13 +26,13 @@ def moab_model(
 
     A = np.array([[1, 0, dt, 0], [0, 1, 0, dt], [0, 0, 1, 0], [0, 0, 0, 1]])
     B = np.array([
-        [(1 / 2) * dt**2 * acc_div_theta, 0],
-        [0, (1 / 2) * dt**2 * acc_div_theta],
-        [dt * acc_div_theta, 0],
-        [0, dt * acc_div_theta]
+            [(1 / 2) * dt**2 * acc_div_theta, 0],
+            [0, (1 / 2) * dt**2 * acc_div_theta],
+            [dt * acc_div_theta, 0],
+            [0, dt * acc_div_theta],
     ])
-    # fmt:on
     next_state = A @ state + B @ action  # x_t+1 = Ax_t + Bu_t
+    # fmt: on
     return next_state
 
 
