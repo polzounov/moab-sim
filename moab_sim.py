@@ -96,7 +96,7 @@ class MoabSim:
         return self.state
 
     def step(self, action: np.ndarray) -> np.ndarray:
-        # Use the legacy coordinate system for the simulation
+        # Use the legacy coordinate system for the simulation to match old brains
         pitch, roll = -action
         action = np.array([-roll, pitch])
 
