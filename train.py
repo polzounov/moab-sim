@@ -134,8 +134,8 @@ if __name__ == "__main__":
     num_timesteps = int(args.num_timesteps)
 
     runs = {
-        "reference-no-lstm": {"lstm": False},
-        # "reference-no-lstm-no-dr": {"env_name": "MoabEnv", "lstm": False},
+        # "reference-no-lstm": {"lstm": False},
+        "reference-no-lstm-no-dr": {"env_name": "MoabEnv", "lstm": False},
         # "reference-no-dr": {"env_name": "MoabEnv"},
         # "dr": {},
         # "dr-no-reset": {"reset_hidden": False},

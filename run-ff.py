@@ -20,25 +20,30 @@ model = PPO.load(sys.argv[1])
 # }
 # env.sim.params = phys_params
 
+n_repeat = 3
 
-obs = env.reset()
+obs = env.reset(config={"dt": 0.0333 / n_repeat})
 r_tot = 0
 
 while True:
-    for _ in range(100):
+    for _ in range(300):
         action, _states = model.predict(obs, deterministic=True)
-        obs, reward, done, info = env.step(action)
-        r_tot += reward
 
-        env.render()
+        for _ in range(n_repeat):
+            obs, reward, done, info = env.step(action)
+            r_tot += reward
+            env.render()
+
+            if done:
+                break
         # time.sleep(0.5)
 
         if done:
             obs = env.reset()
-            print("Ep reward:", r_tot)
+            print("Ep reward:", r_tot / n_repeat)
             r_tot = 0
     obs = env.reset()
-    print("Ep reward:", r_tot)
+    print("Ep reward:", r_tot / n_repeat)
     r_tot = 0
 
 env.close()

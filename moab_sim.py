@@ -97,7 +97,8 @@ class MoabSim:
 
     def step(self, action: np.ndarray) -> np.ndarray:
         # Use the legacy coordinate system for the simulation to match old brains
-        pitch, roll = -action
+        # Direction of theta_x and theta_y and scale in degrees
+        pitch, roll = -action * 22.0
         action = np.array([-roll, pitch])
 
         self.plate_angles = calculate_plate_angles(self.plate_angles, action)

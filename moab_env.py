@@ -35,9 +35,9 @@ class MoabEnv(Env):
     def close(self):
         pass
 
-    def reset(self):
+    def reset(self, config=None):
         self.iteration_count = 0
-        self.state = self.sim.reset()
+        self.state = self.sim.reset(config)
         return self.state
 
     def done(self) -> bool:
