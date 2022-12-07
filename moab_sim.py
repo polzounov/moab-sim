@@ -10,8 +10,9 @@ def moab_model(
     gravity: float = lambda: 9.81,
     ball_radius: float = lambda: 0.02,
     ball_shell: float = lambda: 0.0002,
-    **kwargs
+    **kwargs,
 ) -> np.ndarray:
+    print("Unused keyword arguments", **kwargs)
     r = ball_radius
     h = ball_radius - ball_shell  # hollow radius
     dt += np.random.uniform(-jitter, jitter)  # add jitter to the simulation timesteps
@@ -69,10 +70,11 @@ class MoabSim:
             "dt": 0.0333,  # in s, 33.3ms
             "jitter": 0.004,  # in s, +/- 4ms
             "gravity": 9.81,  # m/s^2, Earth: there's no place like it.
-            "plate_radius": 0.225 / 2,  # m, Moab: 225mm dia
+            "plate_radius": 0.1125,  # m, Moab: 112.5mm radius
             "ball_mass": 0.0027,  # kg, Ping-Pong ball: 2.7g
             "ball_radius": 0.02,  # m, Ping-Pong ball: 20mm
             "ball_shell": 0.0002,  # m, Ping-Pong ball: 0.2mm
+            "max_starting_distance_ratio": 0.9,  # m, 0.9 of Moab radius
             "max_starting_velocity": 1.0,  # m/s, Ping-Pong ball: 1.0m/s
         }
         if config is not None:
@@ -90,8 +92,22 @@ class MoabSim:
         if config is not None:
             self._overwrite_params(config)
 
-        self.state[:2] = uniform_circle(0.9 * self.params["plate_radius"])
-        self.state[2:] = uniform_circle(self.params["max_starting_velocity"])
+        if (
+            config.get("initial_x")
+            and config.get("initial_y")
+            and config.get("initial_vel_x")
+            and config.get("initial_vel_y")
+        ):
+            # Use the old state intialization (starting x, y, x_vel, and y_vel)
+            # (Used in tutorial 2)
+            self.state[:2] = config.get("initial_x"), config.get("initial_y")
+            self.state[2:] = config.get("initial_vel_x"), config.get("initial_vel_y")
+        else:
+            # Intialize within a uniform circle (uniformly distributed within a circle)
+            plate_radius = self.params["plate_radius"]
+            max_dist_ratio = self.params["max_starting_distance_ratio"]
+            self.state[:2] = uniform_circle(plate_radius * max_dist_ratio)
+            self.state[2:] = uniform_circle(self.params["max_starting_velocity"])
 
         return self.state
 

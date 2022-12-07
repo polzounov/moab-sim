@@ -95,22 +95,22 @@ class MoabDomainRandEnv(MoabEnv):
     def __init__(self, max_iterations=2048, dr_params={}):
         super(MoabDomainRandEnv, self).__init__(max_iterations=max_iterations)
 
+        # fmt:off
         # defaults for all physics params
-        d_g, d_pr, d_bm, d_br, d_bs, d_msv = 9.81, 0.1125, 0.0027, 0.02, 0.0002, 1.0
-        self.g = dr_params.get("g") or np.random.uniform(d_g * 0.5, d_g * 2.0)
-        self.pr = dr_params.get("pr") or np.random.uniform(d_pr * 0.5, d_pr * 2.0)
-        self.bm = dr_params.get("bm") or np.random.uniform(d_bm * 0.5, d_bm * 2.0)
-        self.br = dr_params.get("br") or np.random.uniform(d_br * 0.5, d_br * 2.0)
-        self.bs = dr_params.get("bs") or np.random.uniform(d_bs * 0.5, d_bs * 2.0)
-        self.msv = dr_params.get("msv") or np.random.uniform(d_msv * 0.5, d_msv * 2.0)
+        d_g, d_pr, d_bm, d_br, d_bs = 9.81, 0.1125, 0.0027, 0.02, 0.0002
+        self.g = dr_params.get("gravity") or np.random.uniform(d_g * 0.5, d_g * 2.0)
+        self.pr = dr_params.get("plate_radius") or np.random.uniform(d_pr * 0.5, d_pr * 2.0)
+        self.bm = dr_params.get("ball_mass") or np.random.uniform(d_bm * 0.5, d_bm * 2.0)
+        self.br = dr_params.get("ball_radius") or np.random.uniform(d_br * 0.5, d_br * 2.0)
+        self.bs = dr_params.get("ball_shell") or np.random.uniform(d_bs * 0.5, d_bs * 2.0)
+        # fmt:on
 
         self.dr_config = {
-            "g": self.g,
-            "pr": self.pr,
-            "bm": self.bm,
-            "br": self.br,
-            "bs": self.bs,
-            "msv": self.msv,
+            "gravity": self.g,
+            "plate_radius": self.pr,
+            "ball_mass": self.bm,
+            "ball_radius": self.br,
+            "ball_shell": self.bs,
         }
 
     def reset(self):
