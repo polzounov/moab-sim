@@ -12,7 +12,7 @@ def moab_model(
     ball_shell: float = lambda: 0.0002,
     **kwargs,
 ) -> np.ndarray:
-    print("Unused keyword arguments", **kwargs)
+    print("Unused keyword arguments", kwargs)
     r = ball_radius
     h = ball_radius - ball_shell  # hollow radius
     dt += np.random.uniform(-jitter, jitter)  # add jitter to the simulation timesteps
