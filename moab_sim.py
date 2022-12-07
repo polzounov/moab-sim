@@ -93,15 +93,17 @@ class MoabSim:
             self._overwrite_params(config)
 
         if (
-            config.get("initial_x")
-            and config.get("initial_y")
-            and config.get("initial_vel_x")
-            and config.get("initial_vel_y")
+            self.params.get("initial_x")
+            and self.params.get("initial_y")
+            and self.params.get("initial_vel_x")
+            and self.params.get("initial_vel_y")
         ):
             # Use the old state intialization (starting x, y, x_vel, and y_vel)
             # (Used in tutorial 2)
-            self.state[:2] = config.get("initial_x"), config.get("initial_y")
-            self.state[2:] = config.get("initial_vel_x"), config.get("initial_vel_y")
+            self.state[:2] = self.params.get("initial_x"), self.params.get("initial_y")
+            self.state[2:] = self.params.get("initial_vel_x"), self.params.get(
+                "initial_vel_y"
+            )
         else:
             # Intialize within a uniform circle (uniformly distributed within a circle)
             plate_radius = self.params["plate_radius"]
