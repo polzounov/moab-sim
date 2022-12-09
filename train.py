@@ -1,6 +1,6 @@
 import sys
 import gym
-from moab_env import MoabEnv, MoabDomainRandEnv
+from moab_env import MoabEnv, MoabDomainRandEnv, MoabPartialDomainRandEnv
 from gym.wrappers import TimeLimit
 
 from stable_baselines3 import PPO
@@ -10,7 +10,11 @@ from stable_baselines3.common.callbacks import CheckpointCallback
 from stable_baselines3.common.utils import get_schedule_fn
 
 
-ENVS = {"MoabEnv": MoabEnv, "MoabDomainRandEnv": MoabDomainRandEnv}
+ENVS = {
+    "MoabEnv": MoabEnv,
+    "MoabDomainRandEnv": MoabDomainRandEnv,
+    "MoabPartialDomainRandEnv": MoabPartialDomainRandEnv,
+}
 
 
 def train(
@@ -128,14 +132,21 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
     # parser.add_argument("--logs", default="./logs", type=str)
-    parser.add_argument("-n", "--num-timesteps", default=1_500_000, type=float)
+    parser.add_argument("-n", "--num-timesteps", default=1_000_000, type=float)
     args, _ = parser.parse_known_args()
 
     num_timesteps = int(args.num_timesteps)
 
     runs = {
         # "reference-no-lstm": {"lstm": False},
-        "reference-no-lstm-no-dr": {"env_name": "MoabEnv", "lstm": False},
+        "no-lstm-mini-dr": {
+            "env_name": "MoabPartialDomainRandEnv",
+            "lstm": False,
+        },
+        "mini-dr": {
+            "env_name": "MoabPartialDomainRandEnv",
+            "lstm": True,
+        },
         # "reference-no-dr": {"env_name": "MoabEnv"},
         # "dr": {},
         # "dr-no-reset": {"reset_hidden": False},

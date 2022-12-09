@@ -54,7 +54,8 @@ class MoabEnv(Env):
 
     def step(self, action):
         # Action is -1, 1 scaled
-        action_radians = np.asarray(action) * -1.0 * np.radians(self.max_plate_angle)
+        pitch, roll = action
+        action_legacy = np.array([pitch, roll])
         self.state = self.sim.step(action)
         self.iteration_count += 1
         return self.state, self.reward(), self.done(), {}
@@ -91,33 +92,41 @@ class MoabEnv(Env):
         return img
 
 
-class MoabDomainRandEnv(MoabEnv):
-    def __init__(self, max_iterations=2048, dr_params={}):
-        super(MoabDomainRandEnv, self).__init__(max_iterations=max_iterations)
-
-        # fmt:off
-        # defaults for all physics params
-        d_g, d_pr, d_bm, d_br, d_bs = 9.81, 0.1125, 0.0027, 0.02, 0.0002
-        self.g = dr_params.get("gravity") or np.random.uniform(d_g * 0.5, d_g * 2.0)
-        self.pr = dr_params.get("plate_radius") or np.random.uniform(d_pr * 0.5, d_pr * 2.0)
-        self.bm = dr_params.get("ball_mass") or np.random.uniform(d_bm * 0.5, d_bm * 2.0)
-        self.br = dr_params.get("ball_radius") or np.random.uniform(d_br * 0.5, d_br * 2.0)
-        self.bs = dr_params.get("ball_shell") or np.random.uniform(d_bs * 0.5, d_bs * 2.0)
-        # fmt:on
-
-        self.dr_config = {
-            "gravity": self.g,
-            "plate_radius": self.pr,
-            "ball_mass": self.bm,
-            "ball_radius": self.br,
-            "ball_shell": self.bs,
-        }
-
+class MoabPartialDomainRandEnv(MoabEnv):
     def reset(self):
         self.iteration_count = 0
 
-        # Sample the random physics parameters
-        sampled_config = {k: v() for k, v in self.dr_config.items()}
+        # Default values of physical constants being randomized
+        d_b_radius, d_b_shell = 0.02, 0.0002
+        br = np.random.uniform(d_b_radius * 0.8, d_b_radius * 1.2)
+        bs = np.random.uniform(d_b_shell * 0.8, d_b_shell * 1.2)
 
-        self.state = self.sim.reset(config=sampled_config)
+        config = {
+            "ball_radius": br,
+            "ball_shell": bs,
+        }
+
+        self.state = self.sim.reset(config=config)
+        return self.state
+
+
+class MoabDomainRandEnv(MoabEnv):
+    def reset(self):
+        self.iteration_count = 0
+
+        # Default values of physical constants being randomized
+        d_gravity, d_p_radius, d_b_radius, d_b_shell = 9.81, 0.1125, 0.02, 0.0002
+        g = np.random.uniform(d_gravity * 0.5, d_gravity * 2.0)
+        pr = np.random.uniform(d_p_radius * 0.5, d_p_radius * 2.0)
+        br = np.random.uniform(d_b_radius * 0.5, d_b_radius * 2.0)
+        bs = np.random.uniform(d_b_shell * 0.5, d_b_shell * 2.0)
+
+        config = {
+            "gravity": g,
+            "plate_radius": pr,
+            "ball_radius": br,
+            "ball_shell": bs,
+        }
+
+        self.state = self.sim.reset(config=config)
         return self.state

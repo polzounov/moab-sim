@@ -12,7 +12,6 @@ def moab_model(
     ball_shell: float = lambda: 0.0002,
     **kwargs,
 ) -> np.ndarray:
-    print("Unused keyword arguments", **kwargs)
     r = ball_radius
     h = ball_radius - ball_shell  # hollow radius
     dt += np.random.uniform(-jitter, jitter)  # add jitter to the simulation timesteps
@@ -74,7 +73,7 @@ class MoabSim:
             "ball_mass": 0.0027,  # kg, Ping-Pong ball: 2.7g
             "ball_radius": 0.02,  # m, Ping-Pong ball: 20mm
             "ball_shell": 0.0002,  # m, Ping-Pong ball: 0.2mm
-            "max_starting_distance_ratio": 0.9,  # m, 0.9 of Moab radius
+            "max_starting_distance_ratio": 0.6,  # m, 0.9 of Moab radius
             "max_starting_velocity": 1.0,  # m/s, Ping-Pong ball: 1.0m/s
         }
         if config is not None:
@@ -100,10 +99,10 @@ class MoabSim:
         ):
             # Use the old state intialization (starting x, y, x_vel, and y_vel)
             # (Used in tutorial 2)
+            # fmt: off
             self.state[:2] = self.params.get("initial_x"), self.params.get("initial_y")
-            self.state[2:] = self.params.get("initial_vel_x"), self.params.get(
-                "initial_vel_y"
-            )
+            self.state[2:] = self.params.get("initial_vel_x"), self.params.get("initial_vel_y")
+            # fmt: on
         else:
             # Intialize within a uniform circle (uniformly distributed within a circle)
             plate_radius = self.params["plate_radius"]
@@ -114,10 +113,12 @@ class MoabSim:
         return self.state
 
     def step(self, action: np.ndarray) -> np.ndarray:
+        # Both pitch and roll are in range [-1, 1], and backwards to the physics here
+        pitch, roll = -action * np.radians(22.0)
+
         # Use the legacy coordinate system for the simulation to match old brains
         # Direction of theta_x and theta_y and scale in degrees
-        pitch, roll = -action * 22.0
-        action = np.array([-roll, pitch])
+        # action = np.array([-roll, pitch])
 
         self.plate_angles = calculate_plate_angles(self.plate_angles, action)
         self.state = moab_model(self.state, self.plate_angles, **self.params)

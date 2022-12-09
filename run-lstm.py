@@ -33,7 +33,9 @@ episode_starts = np.ones((num_envs,), dtype=bool)
 
 while True:
     for _ in range(100):
-        action, lstm_states = model.predict(obs, state=lstm_states, episode_start=episode_starts, deterministic=True)
+        action, lstm_states = model.predict(
+            obs, state=lstm_states, episode_start=episode_starts, deterministic=True
+        )
         obs, reward, done, info = env.step(action)
         r_tot += reward
 
