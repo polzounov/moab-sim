@@ -15,12 +15,19 @@ pygame.init()
 class MoabEnv(Env):
     metadata = {"render.modes": ["human"]}
 
-    def __init__(self, max_iterations=2048, max_plate_angle=22):
+    def __init__(
+        self,
+        max_iterations=2048,
+        max_plate_angle=22,
+        scaling=1.0,
+        linear_acceleration_servos=True,
+        quantize=False,
+    ):
+        self.sim = MoabSim(linear_acceleration_servos=linear_acceleration_servos)
+
         act_max = np.asarray([1, 1], dtype=np.float32)
-        plate_radius = 0.1125
-        obs_max = np.asarray(
-            [plate_radius, plate_radius, np.inf, np.inf], dtype=np.float32
-        )
+        plate_radius = self.sim.params["plate_radius"]
+        obs_max = np.asarray([plate_radius, plate_radius, np.inf, np.inf], dtype=np.float32)
         self.observation_space = spaces.Box(-obs_max, obs_max)
         self.action_space = spaces.Box(-act_max, act_max)
 
@@ -28,9 +35,11 @@ class MoabEnv(Env):
         self.iteration_count = 0
         self.max_iterations = max_iterations
 
-        self.sim = MoabSim()
         self.state = self.sim.state
         self._viewer = None
+
+        self.scaling = scaling
+        self.quantize = quantize
 
     def close(self):
         pass
@@ -54,9 +63,15 @@ class MoabEnv(Env):
 
     def step(self, action):
         # Action is -1, 1 scaled
-        pitch, roll = action
-        action_legacy = np.array([pitch, roll])
-        self.state = self.sim.step(action)
+        action = np.asarray(action) * np.radians(22) * self.scaling
+        if self.quantize:
+            action = np.radians(np.round(np.degrees(action)))
+        pitch, roll = np.clip(-1, 1, action)
+
+        action_legacy = -np.array([-roll, pitch])
+        self.state = self.sim.step(action_legacy)
+        # self.state = self.sim.step(action)
+
         self.iteration_count += 1
         return self.state, self.reward(), self.done(), {}
 

@@ -153,6 +153,7 @@ class MoabBonsaiSim:
     def step(self, action: Dict) -> Dict[str, float]:
         """Step through the environment for a single iteration."""
         pitch, roll = action["input_pitch"], action["input_roll"]
+        pitch, roll = pitch * np.radians(22), roll * np.radians(22)
         sim_state = self.simulator.step(np.array([pitch, roll], dtype=np.float32))
         self.iteration_count += 1
 
