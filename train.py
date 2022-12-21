@@ -139,14 +139,14 @@ if __name__ == "__main__":
 
     runs = {
         # "reference-no-lstm": {"lstm": False},
-        "no-lstm-mini-dr": {
-            "env_name": "MoabPartialDomainRandEnv",
+        "no-lstm-newenv": {
+            "env_name": "MoabEnv",
             "lstm": False,
         },
-        "mini-dr": {
-            "env_name": "MoabPartialDomainRandEnv",
-            "lstm": True,
-        },
+        # "mini-dr": {
+        #     "env_name": "MoabPartialDomainRandEnv",
+        #     "lstm": True,
+        # },
         # "reference-no-dr": {"env_name": "MoabEnv"},
         # "dr": {},
         # "dr-no-reset": {"reset_hidden": False},

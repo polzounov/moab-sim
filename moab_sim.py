@@ -32,8 +32,8 @@ def moab_model(
 
     A = np.array([[1, 0, dt, 0], [0, 1, 0, dt], [0, 0, 1, 0], [0, 0, 0, 1]])
     B = np.array([
-            [(1 / 2) * dt**2 * acc_div_theta, 0],
-            [0, (1 / 2) * dt**2 * acc_div_theta],
+            [0.5 * dt**2 * acc_div_theta, 0],
+            [0, 0.5 * dt**2 * acc_div_theta],
             [dt * acc_div_theta, 0],
             [0, dt * acc_div_theta],
     ])
@@ -119,6 +119,7 @@ class MoabSim:
         self,
         config: Optional[Dict[str, float]] = None,
         linear_acceleration_servos: bool = True,
+        moab_model_opt: Callable = None,
     ):
         self.state = np.array([0, 0, 0, 0], dtype=np.float32)
         self.plate_angles = np.array([0, 0], dtype=np.float32)
@@ -145,6 +146,11 @@ class MoabSim:
             max_vel=DEFAULT_PLATE_MAX_ANGULAR_VELOCITY,
             dt=self.params["dt"],
         )
+
+        if moab_model_opt is not None:
+            self.moab_model = moab_model_opt
+        else:
+            self.moab_model = moab_model
 
     def _overwrite_params(self, config: Dict[str, float]):
         """
@@ -207,7 +213,7 @@ class MoabSim:
         else:
             self.plate_angles = action
 
-        self.state = moab_model(
+        self.state = self.moab_model(
             self.state,
             self.plate_angles,
             current_dt=current_dt,

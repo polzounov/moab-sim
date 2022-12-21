@@ -22,7 +22,7 @@ using Goal
 const RadiusOfPlate = 0.1125 # m
 
 # Velocities measured in meters per sec.
-const MaxVelocity = 6.0
+const MaxVelocity = 7.0
 const MaxInitialVelocity = 1.0
 
 # Threshold for ball placement
@@ -106,8 +106,6 @@ graph (input: ObservableState) {
                 # Specify the configuration parameters that should be varied
                 # from one episode to the next during this lesson.
                 scenario {
-                    max_starting_velocity: number<-MaxInitialVelocity * 0.4 .. MaxInitialVelocity * 0.4>,
-
                     ball_radius: number<PingPongRadius * 0.8 .. PingPongRadius * 1.2>,
                     ball_shell: number<PingPongShell * 0.8 .. PingPongShell * 1.2>,
                 }

@@ -29,7 +29,9 @@ while True:
     for _ in range(300):
         action, _states = model.predict(obs, deterministic=True)
 
+        ep_len = 0
         for _ in range(n_repeat):
+            ep_len += 1
             obs, reward, done, info = env.step(action)
             r_tot += reward
             env.render()
@@ -40,7 +42,7 @@ while True:
 
         if done:
             obs = env.reset()
-            print("Ep reward:", r_tot / n_repeat)
+            print("Ep len:", ep_len, "Ep reward:", r_tot / n_repeat)
             r_tot = 0
     obs = env.reset()
     print("Ep reward:", r_tot / n_repeat)

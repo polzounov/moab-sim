@@ -22,8 +22,12 @@ class MoabEnv(Env):
         scaling=1.0,
         linear_acceleration_servos=True,
         quantize=False,
+        moab_model_opt=None,
     ):
-        self.sim = MoabSim(linear_acceleration_servos=linear_acceleration_servos)
+        self.sim = MoabSim(
+            linear_acceleration_servos=linear_acceleration_servos,
+            moab_model_opt=moab_model_opt,
+        )
 
         act_max = np.asarray([1, 1], dtype=np.float32)
         plate_radius = self.sim.params["plate_radius"]
