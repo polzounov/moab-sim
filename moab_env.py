@@ -56,7 +56,7 @@ class MoabEnv(Env):
     def done(self) -> bool:
         x, y = self.state[:2]
         halted = np.sqrt(x**2 + y**2) > 0.95 * self.sim.params["plate_radius"]
-        halted |= self.iteration_count >= self.max_iterations\
+        halted |= self.iteration_count >= self.max_iterations
         return halted
 
     def reward(self) -> float:
