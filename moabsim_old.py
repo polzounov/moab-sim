@@ -28,7 +28,9 @@ DEFAULT_OBSTACLE_X = 0.03  # m, arbitrarily chosen
 DEFAULT_OBSTACLE_Y = 0.03  # m, arbitrarily chosen
 
 DEFAULT_PLATE_RADIUS = 0.225 / 2.0  # m, Moab: 225mm dia
-PLATE_ORIGIN_TO_SURFACE_OFFSET = 0.009  # 9mm offset from plate rot origin to plate surface
+PLATE_ORIGIN_TO_SURFACE_OFFSET = (
+    0.009  # 9mm offset from plate rot origin to plate surface
+)
 
 # plate limits
 PLATE_HEIGHT_MAX = 0.040  # m, Moab: 40mm
@@ -48,7 +50,9 @@ PLATE_Z_ACCEL = 10.0  # m/s^2
 DEFAULT_PLATE_MAX_ANGULAR_VELOCITY = (60.0 / 3.0) * math.radians(15)  # rad/s
 
 # Set acceleration to get the plate up to velocity in 1/100th of a sec
-DEFAULT_PLATE_ANGULAR_ACCEL = (100.0 / 1.0) * DEFAULT_PLATE_MAX_ANGULAR_VELOCITY  # rad/s^2
+DEFAULT_PLATE_ANGULAR_ACCEL = (
+    100.0 / 1.0
+) * DEFAULT_PLATE_MAX_ANGULAR_VELOCITY  # rad/s^2
 
 # useful constants
 X_AXIS = np.array([1.0, 0.0, 0.0])
@@ -161,11 +165,15 @@ class MoabModelOld:
         Returns True if the ball is off the plate.
         """
         # ball.z relative to plate
-        zpos = self.ball.z - (self.plate.z + self.ball_radius + PLATE_ORIGIN_TO_SURFACE_OFFSET)
+        zpos = self.ball.z - (
+            self.plate.z + self.ball_radius + PLATE_ORIGIN_TO_SURFACE_OFFSET
+        )
 
         # ball distance from ball position on plate at origin
         distance_to_center = math.sqrt(
-            math.pow(self.ball.x, 2.0) + math.pow(self.ball.y, 2.0) + math.pow(zpos, 2.0)
+            math.pow(self.ball.x, 2.0)
+            + math.pow(self.ball.y, 2.0)
+            + math.pow(zpos, 2.0)
         )
 
         return distance_to_center > self.plate_radius
@@ -194,7 +202,13 @@ class MoabModelOld:
         )  # mean zero gauss with sigma = ~sqrt(scalar)/3
 
     def accel_param(
-        self, q: float, dest: float, vel: float, acc: float, max_vel: float, delta_t: float
+        self,
+        q: float,
+        dest: float,
+        vel: float,
+        acc: float,
+        max_vel: float,
+        delta_t: float,
     ) -> Tuple[float, float]:
         """
         perform a linear acceleration of variable towards a destination
@@ -306,8 +320,12 @@ class MoabModelOld:
 
     # convert X/Y theta components into a Z-Up RH plane normal
     def _plate_nor(self) -> Vector3:
-        x_rot = matrix44.create_from_axis_rotation(axis=X_AXIS, theta=self.plate_theta_x)
-        y_rot = matrix44.create_from_axis_rotation(axis=Y_AXIS, theta=self.plate_theta_y)
+        x_rot = matrix44.create_from_axis_rotation(
+            axis=X_AXIS, theta=self.plate_theta_x
+        )
+        y_rot = matrix44.create_from_axis_rotation(
+            axis=Y_AXIS, theta=self.plate_theta_y
+        )
 
         # pitch then roll
         nor = matrix44.apply_to_vector(mat=x_rot, vec=Z_AXIS)
@@ -420,7 +438,9 @@ class MoabModelOld:
         surface_plane = self._surface_plane()
 
         contact = Vector3(ray_intersect_plane(ball_ray, surface_plane, False))
-        radius_contact = Vector3(ray_intersect_plane(ball_radius_ray, surface_plane, False))
+        radius_contact = Vector3(
+            ray_intersect_plane(ball_radius_ray, surface_plane, False)
+        )
 
         x, y = contact.x, contact.y
         r = math.fabs(contact.x - radius_contact.x)
@@ -431,8 +451,12 @@ class MoabModelOld:
         self.estimated_radius = r + MoabModelOld.random_noise(self.ball_noise)
 
         # Use n-1 states to calculate an estimated velocity.
-        self.estimated_vel_x = (self.estimated_x - self.prev_estimated_x) / self.step_time
-        self.estimated_vel_y = (self.estimated_y - self.prev_estimated_y) / self.step_time
+        self.estimated_vel_x = (
+            self.estimated_x - self.prev_estimated_x
+        ) / self.step_time
+        self.estimated_vel_y = (
+            self.estimated_y - self.prev_estimated_y
+        ) / self.step_time
 
         # distance to target
         self.estimated_distance = MoabModelOld.distance_to_point(
@@ -488,7 +512,9 @@ class MoabModelOld:
         )
         return create_from_position(plate_surface, self._plate_nor())
 
-    def _motion_for_time(self, u: Vector3, a: Vector3, t: float) -> Tuple[Vector3, Vector3]:
+    def _motion_for_time(
+        self, u: Vector3, a: Vector3, t: float
+    ) -> Tuple[Vector3, Vector3]:
         """
         Equations of motion for displacement and final velocity
         u: initial velocity
@@ -748,13 +774,19 @@ class MoabEnvOld(Env):
         self.model.plate_theta_vel_limit = config.get(
             "plate_theta_vel_limit", self.model.plate_theta_vel_limit
         )
-        self.model.plate_theta_acc = config.get("plate_theta_acc", self.model.plate_theta_acc)
-        self.model.plate_theta_limit = config.get("plate_theta_limit", self.model.plate_theta_limit)
+        self.model.plate_theta_acc = config.get(
+            "plate_theta_acc", self.model.plate_theta_acc
+        )
+        self.model.plate_theta_limit = config.get(
+            "plate_theta_limit", self.model.plate_theta_limit
+        )
         self.model.plate_z_limit = config.get("plate_z_limit", self.model.plate_z_limit)
         self.model.ball_mass = config.get("ball_mass", self.model.ball_mass)
         self.model.ball_radius = config.get("ball_radius", self.model.ball_radius)
         self.model.ball_shell = config.get("ball_shell", self.model.ball_shell)
-        self.model.obstacle_radius = config.get("obstacle_radius", self.model.obstacle_radius)
+        self.model.obstacle_radius = config.get(
+            "obstacle_radius", self.model.obstacle_radius
+        )
         self.model.obstacle_x = config.get("obstacle_x", self.model.obstacle_x)
         self.model.obstacle_y = config.get("obstacle_y", self.model.obstacle_y)
         # a target position the AI can try and move the ball to

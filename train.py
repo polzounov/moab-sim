@@ -6,7 +6,11 @@ from gym.wrappers import TimeLimit
 from stable_baselines3 import PPO
 from sb3_contrib import RecurrentPPO
 from sb3_contrib.common.recurrent.policies import RecurrentActorCriticPolicy
-from stable_baselines3.common.callbacks import CheckpointCallback
+from stable_baselines3.common.callbacks import (
+    CheckpointCallback,
+    EvalCallback,
+    CallbackList,
+)
 from stable_baselines3.common.utils import get_schedule_fn
 
 
@@ -20,30 +24,42 @@ ENVS = {
 def train(
     run_name,
     num_timesteps,
+    checkpoint_frequency=10_000,
+    render_checkpoints=False,
+    play_when_done=False,
     env_name="MoabDomainRandEnv",
     lstm=True,
     enable_critic_lstm=True,
     shared_lstm=False,
     reset_hidden=True,
     env_params={},
-    play_when_done=False,
 ):
     run_name = run_name[:-1] if run_name[-1] == "/" else run_name
     save_path = "./logs/" + run_name
     tb_path = "./tb/" + run_name
 
     env = ENVS[env_name](**env_params)
+    eval_env = ENVS[env_name](**env_params)
     env = TimeLimit(env, max_episode_steps=2048)
 
-    # fmt: off
-    checkpoint_callback = CheckpointCallback(save_freq=10_000, save_path=save_path, name_prefix="moab")
-    # fmt: on
+    checkpoint_callback = CheckpointCallback(
+        save_freq=checkpoint_frequency, save_path=save_path, name_prefix="moab"
+    )
+
+    if render_checkpoints:
+        eval_callback = EvalCallback(
+            eval_env, eval_freq=checkpoint_frequency, render=True
+        )
+        callback = CallbackList([checkpoint_callback, eval_callback])
+    else:
+        callback = checkpoint_callback
 
     if lstm:
         policy_params = {
             "lstm_hidden_size": 64,  # Reduced from 256
             "n_lstm_layers": 1,  # Default
-            "shared_lstm": shared_lstm,  # This is false by default (on would be only use gradient from actor)
+            # (below) False by default (on would be only use gradient from actor)
+            "shared_lstm": shared_lstm,
             "enable_critic_lstm": enable_critic_lstm,
             "reset_hidden": reset_hidden,
             "lstm_kwargs": None,
@@ -91,7 +107,7 @@ def train(
         )
         model.learn(
             total_timesteps=num_timesteps,
-            callback=checkpoint_callback,
+            callback=callback,
             tb_log_name="first_run",
         )
         model.save(save_path + "/trained_moab")
@@ -132,6 +148,9 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
     # parser.add_argument("--logs", default="./logs", type=str)
+    parser.add_argument("-c", "--checkpoint-frequency", default=10_000, type=int)
+    parser.add_argument("-p", "--play-when-done", default=False, type=bool)
+    parser.add_argument("-r", "--render-checkpoints", default=False, type=bool)
     parser.add_argument("-n", "--num-timesteps", default=1_000_000, type=float)
     args, _ = parser.parse_known_args()
 
@@ -139,14 +158,14 @@ if __name__ == "__main__":
 
     runs = {
         # "reference-no-lstm": {"lstm": False},
-        "no-lstm-newenv": {
-            "env_name": "MoabEnv",
+        # "no-lstm-newenv": {
+        #     "env_name": "MoabEnv",
+        #     "lstm": False,
+        # },
+        "mini-dr-ff": {
+            "env_name": "MoabPartialDomainRandEnv",
             "lstm": False,
         },
-        # "mini-dr": {
-        #     "env_name": "MoabPartialDomainRandEnv",
-        #     "lstm": True,
-        # },
         # "reference-no-dr": {"env_name": "MoabEnv"},
         # "dr": {},
         # "dr-no-reset": {"reset_hidden": False},
@@ -156,4 +175,11 @@ if __name__ == "__main__":
 
     for run_name, params in runs.items():
         run_name = append_timesteps_str(run_name, num_timesteps)
-        train(run_name, int(args.num_timesteps), **params)
+        train(
+            run_name,
+            int(args.num_timesteps),
+            checkpoint_frequency,
+            render_checkpoints,
+            play_when_done,
+            **params,
+        )

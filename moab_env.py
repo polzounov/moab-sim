@@ -17,8 +17,7 @@ class MoabEnv(Env):
 
     def __init__(
         self,
-        max_iterations=2048,
-        max_plate_angle=22,
+        max_iterations=300,
         scaling=1.0,
         linear_acceleration_servos=True,
         quantize=False,
@@ -31,11 +30,12 @@ class MoabEnv(Env):
 
         act_max = np.asarray([1, 1], dtype=np.float32)
         plate_radius = self.sim.params["plate_radius"]
-        obs_max = np.asarray([plate_radius, plate_radius, np.inf, np.inf], dtype=np.float32)
+        obs_max = np.asarray(
+            [plate_radius, plate_radius, np.inf, np.inf], dtype=np.float32
+        )
         self.observation_space = spaces.Box(-obs_max, obs_max)
         self.action_space = spaces.Box(-act_max, act_max)
 
-        self.max_plate_angle = max_plate_angle
         self.iteration_count = 0
         self.max_iterations = max_iterations
 
@@ -56,7 +56,7 @@ class MoabEnv(Env):
     def done(self) -> bool:
         x, y = self.state[:2]
         halted = np.sqrt(x**2 + y**2) > 0.95 * self.sim.params["plate_radius"]
-        halted |= self.iteration_count >= self.max_iterations
+        halted |= self.iteration_count >= self.max_iterations\
         return halted
 
     def reward(self) -> float:
@@ -79,7 +79,7 @@ class MoabEnv(Env):
         self.iteration_count += 1
         return self.state, self.reward(), self.done(), {}
 
-    def render(self):
+    def render(self, mode=None):
         size = 800
         if self._viewer is None:
             self._viewer = pygame.display.set_mode((size, size))

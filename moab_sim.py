@@ -6,7 +6,9 @@ from typing import Dict, Tuple, Optional, Callable
 DEFAULT_PLATE_MAX_ANGULAR_VELOCITY = (60.0 / 3.0) * np.radians(15)  # rad/s
 
 # Set acceleration to get the plate up to velocity in 1/100th of a sec
-DEFAULT_PLATE_ANGULAR_ACCEL = (100.0 / 1.0) * DEFAULT_PLATE_MAX_ANGULAR_VELOCITY  # rad/s^2
+DEFAULT_PLATE_ANGULAR_ACCEL = (
+    100.0 / 1.0
+) * DEFAULT_PLATE_MAX_ANGULAR_VELOCITY  # rad/s^2
 
 
 def moab_model(
@@ -43,11 +45,11 @@ def moab_model(
 
 
 def linear_acceleration(
-    init_q: np.ndarray,
-    init_vel: np.ndarray,
     acc_magnitude: float,
     max_vel: float,
     dt: float,
+    dims: int = 2,
+    linalc_type=1,
 ):
     """
     perform a linear acceleration of a variable towards a destination
@@ -63,14 +65,14 @@ def linear_acceleration(
 
     returns: (final_position, final_velocity)
     """
-    q = init_q
-    vel = init_vel
+    q = np.zeros((dims,))
+    vel = np.zeros((dims,))
 
     assert q.shape == vel.shape
 
     def next_position(dest: np.ndarray, delta_t: float = dt):
         nonlocal q, vel
-        assert q.shape == vel.shape and q.shape == dest.shape
+        assert q.shape[0] == dims and vel.shape[0] == dims and dest.shape[0] == dims
 
         # direction of accel
         direc = np.sign(dest - q)
@@ -83,7 +85,7 @@ def linear_acceleration(
         vel = vel_end
 
         # Do this for each direction. TODO: do this using vectors...
-        for i in range(q.shape[0]):
+        for i in range(dims):
             # moving towards the dest?
             if (direc[i] > 0 and q[i] < dest[i] and q[i] + delta[i] < dest[i]) or (
                 direc[i] < 0 and q[i] > dest[i] and q[i] + delta[i] > dest[i]
@@ -118,7 +120,7 @@ class MoabSim:
     def __init__(
         self,
         config: Optional[Dict[str, float]] = None,
-        linear_acceleration_servos: bool = True,
+        linear_acceleration_servos: int = True,
         moab_model_opt: Callable = None,
     ):
         self.state = np.array([0, 0, 0, 0], dtype=np.float32)
@@ -140,8 +142,6 @@ class MoabSim:
 
         self.linear_acceleration_servos = linear_acceleration_servos
         self.lin_acc_fn = linear_acceleration(
-            init_q=self.state[:2],
-            init_vel=self.state[2:],
             acc_magnitude=DEFAULT_PLATE_ANGULAR_ACCEL,
             max_vel=DEFAULT_PLATE_MAX_ANGULAR_VELOCITY,
             dt=self.params["dt"],
@@ -185,8 +185,6 @@ class MoabSim:
             self.state[2:] = uniform_circle(self.params["max_starting_velocity"])
 
         self.lin_acc_fn = linear_acceleration(
-            init_q=self.state[:2],
-            init_vel=self.state[2:],
             acc_magnitude=DEFAULT_PLATE_ANGULAR_ACCEL,
             max_vel=DEFAULT_PLATE_MAX_ANGULAR_VELOCITY,
             dt=self.params["dt"],
@@ -213,10 +211,9 @@ class MoabSim:
         else:
             self.plate_angles = action
 
+        self.plate_angles = np.clip(self.plate_angles, -np.radians(22), np.radians(22))
+
         self.state = self.moab_model(
-            self.state,
-            self.plate_angles,
-            current_dt=current_dt,
-            **self.params,
+            self.state, self.plate_angles, current_dt=current_dt, **self.params
         )
         return self.state
