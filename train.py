@@ -178,8 +178,8 @@ if __name__ == "__main__":
         train(
             run_name,
             int(args.num_timesteps),
-            checkpoint_frequency,
-            render_checkpoints,
-            play_when_done,
+            args.checkpoint_frequency,
+            args.render_checkpoints,
+            args.play_when_done,
             **params,
         )

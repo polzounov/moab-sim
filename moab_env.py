@@ -18,7 +18,6 @@ class MoabEnv(Env):
     def __init__(
         self,
         max_iterations=300,
-        scaling=1.0,
         linear_acceleration_servos=True,
         quantize=False,
         moab_model_opt=None,
@@ -42,15 +41,14 @@ class MoabEnv(Env):
         self.state = self.sim.state
         self._viewer = None
 
-        self.scaling = scaling
         self.quantize = quantize
 
     def close(self):
         pass
 
     def reset(self, config=None):
-        self.iteration_count = 0
         self.state = self.sim.reset(config)
+        self.iteration_count = 0
         return self.state
 
     def done(self) -> bool:
@@ -67,14 +65,13 @@ class MoabEnv(Env):
 
     def step(self, action):
         # Action is -1, 1 scaled
-        action = np.asarray(action) * np.radians(22) * self.scaling
+        action = np.asarray(action) * np.radians(22)
         if self.quantize:
             action = np.radians(np.round(np.degrees(action)))
         pitch, roll = np.clip(-1, 1, action)
 
         action_legacy = -np.array([-roll, pitch])
         self.state = self.sim.step(action_legacy)
-        # self.state = self.sim.step(action)
 
         self.iteration_count += 1
         return self.state, self.reward(), self.done(), {}
