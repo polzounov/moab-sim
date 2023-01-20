@@ -4,7 +4,7 @@ import traceback
 import numpy as np
 
 from functools import partial
-from typing import Any, Dict, Union, Optional
+from typing import Any, Dict, Union, Optional, Callable
 
 from microsoft_bonsai_api.simulator.client import BonsaiClient, BonsaiClientConfig
 from microsoft_bonsai_api.simulator.generated.models import (
@@ -97,7 +97,10 @@ class MoabBonsaiSim:
     def __init__(
         self,
         render: bool = False,
-        max_iterations: int = 2048,
+        max_iterations: int = 300,
+        linear_acceleration_servos: bool = True,
+        quantize: bool = False,
+        moab_model_opt: Optional[Callable] = None,
     ):
         """Simulator Interface with the Bonsai Platform
 
@@ -119,6 +122,7 @@ class MoabBonsaiSim:
         d = self.simulator.params.copy()  # Make a copy
 
         # Extract state and action and ensure they are native python floats
+        # Bonsai currently doesn't support numpy types
         x, y, vel_x, vel_y = self.simulator.state
         pitch, roll = self.simulator.plate_angles
         x, y = float(x), float(y)
@@ -130,36 +134,40 @@ class MoabBonsaiSim:
         d["pitch"], d["roll"] = pitch, roll
 
         # Calculate the plate normal. TODO: double check the math
+        # This is ONLY for the visualizer, not for correctness of physics
         d["plate_nor_x"] = float(np.cos(np.radians(pitch)) * np.sin(np.radians(roll)))
         d["plate_nor_y"] = float(np.sin(np.radians(pitch)) * np.cos(np.radians(roll)))
         d["plate_nor_z"] = float(np.cos(np.radians(pitch)) * np.cos(np.radians(roll)))
 
         return d
 
-    def done(self) -> bool:
-        state = self.get_state()
-        x, y = state["ball_x"], state["ball_y"]
-        out_of_bounds = np.sqrt(x**2 + y**2) > 0.95 * state["plate_radius"]
-        too_many_iters = self.iteration_count >= self.max_iterations
-        return out_of_bounds or too_many_iters
-
     def reset(self, config: Dict[str, float] = None) -> Dict[str, float]:
         """Initialize simulator environment using scenario parameters from inkling."""
         self.simulator.reset(config)
         self.iteration_count = 0
-
         return self.get_state()
+
+    def done(self) -> bool:
+        state = self.get_state()
+        x, y = state["ball_x"], state["ball_y"]
+        halted = np.sqrt(x**2 + y**2) > 0.95 * state["plate_radius"]
+        halted |= self.iteration_count >= self.max_iterations
+        return halted
 
     def step(self, action: Dict) -> Dict[str, float]:
         """Step through the environment for a single iteration."""
         pitch, roll = action["input_pitch"], action["input_roll"]
-        pitch, roll = pitch * np.radians(22), roll * np.radians(22)
-        sim_state = self.simulator.step(np.array([pitch, roll], dtype=np.float32))
-        self.iteration_count += 1
+
+        action = np.array([pitch, roll], dtype=np.float32) * np.radians(22)
+        pitch, roll = np.clip(-1, 1, action)
+        action_legacy = -np.array([-roll, pitch])
+
+        sim_state = self.simulator.step(action_legacy)
 
         if self.render:
             self.render_sim()
 
+        self.iteration_count += 1
         return self.get_state()
 
     def render_sim(self):
