@@ -16,21 +16,7 @@ from microsoft_bonsai_api.simulator.generated.models import (
 from moab_sim import MoabSim
 
 
-ENABLE_RENDER = False
-try:
-    # Only import these if using stuff locally
-    import cv2
-    import pygame
-
-    pygame.init()
-    ENABLE_RENDER = True
-
-except:
-    # In this case you're probably in a docker container on Azure
-    pass
-
-
-def main(render):
+def main():
     # Get workspace and accesskey from env if not passed
     workspace = os.getenv("SIM_WORKSPACE")
     accesskey = os.getenv("SIM_ACCESS_KEY")
@@ -52,7 +38,7 @@ def main(render):
     print(f"Registered simulator. {registered_session.session_id}")
 
     sequence_id = 1
-    sim_model = MoabBonsaiSim(render=render)
+    sim_model = MoabBonsaiSim()
     sim_model_state = sim_model.reset()
 
     try:
@@ -96,7 +82,6 @@ def main(render):
 class MoabBonsaiSim:
     def __init__(
         self,
-        render: bool = False,
         max_iterations: int = 300,
         linear_acceleration_servos: bool = True,
         quantize: bool = False,
@@ -112,7 +97,6 @@ class MoabBonsaiSim:
         """
         self.simulator = MoabSim()
         self.count_view = False
-        self.render = render
         self._viewer = None
         self.iteration_count = 0
         self.max_iterations = max_iterations
@@ -121,13 +105,8 @@ class MoabBonsaiSim:
         """Extract current states from the simulator."""
         d = self.simulator.params.copy()  # Make a copy
 
-        # Extract state and action and ensure they are native python floats
-        # Bonsai currently doesn't support numpy types
         x, y, vel_x, vel_y = self.simulator.state
         pitch, roll = self.simulator.plate_angles
-        x, y = float(x), float(y)
-        vel_x, vel_y = float(vel_x), float(vel_y)
-        pitch, roll = float(pitch), float(roll)
 
         d["ball_x"], d["ball_y"] = x, y
         d["ball_vel_x"], d["ball_vel_y"] = vel_x, vel_y
@@ -148,72 +127,29 @@ class MoabBonsaiSim:
         return self.get_state()
 
     def done(self) -> bool:
+        """The terminal function, detects if ball is off the plate."""
         state = self.get_state()
         x, y = state["ball_x"], state["ball_y"]
-        halted = np.sqrt(x**2 + y**2) > 0.95 * state["plate_radius"]
+        halted = np.sqrt(x**2 + y**2) > state["plate_radius"]
         halted |= self.iteration_count >= self.max_iterations
         return halted
 
     def step(self, action: Dict) -> Dict[str, float]:
         """Step through the environment for a single iteration."""
         pitch, roll = action["input_pitch"], action["input_roll"]
-
         action = np.array([pitch, roll], dtype=np.float32) * np.radians(22)
         pitch, roll = np.clip(-1, 1, action)
-        action_legacy = -np.array([-roll, pitch])
 
-        sim_state = self.simulator.step(action_legacy)
+        # In order to maintain brain compatibility on the hardware with brains
+        # trained on a previous version of the simulator
+        action_legacy = (roll, -pitch)
 
-        if self.render:
-            self.render_sim()
+        # Run the sim!
+        self.simulator.step(action_legacy)
 
         self.iteration_count += 1
         return self.get_state()
 
-    def render_sim(self):
-        if ENABLE_RENDER:
-            size = 800
-            if self._viewer is None:
-                self._viewer = pygame.display.set_mode((size, size))
-                self._clock = pygame.time.Clock()
-
-            # Very simple and hacky rendering of moab
-            x, y, _, _ = sim_state = self.simulator.state
-            img = np.zeros((size, size, 3), dtype=np.uint8)
-            center = (int(size / 2), int(size / 2))
-            scaling = (size / 2) / 0.2  # plate take up halfish of the frame
-
-            # plate
-            plate_radius_pix = int(0.1125 * scaling)
-            img = cv2.circle(img, center, plate_radius_pix, (100, 100, 100), -1)
-
-            # fmt:off
-            # ball
-            ball_radius_pix = int(0.020 * scaling)
-            ball_x_pix, ball_y_pix = center[0] + int(x * scaling), center[1] - int(y * scaling)
-            img = cv2.circle(img, (ball_x_pix, ball_y_pix), ball_radius_pix, (255, 165, 0), -1)
-            # fmt: on
-
-            pg_img = pygame.image.frombuffer(img.tobytes(), img.shape[1::-1], "RGB")
-            self._viewer.blit(pg_img, (0, 0))
-            pygame.display.update()
-            self._clock.tick(10)
-
-            return img
-
 
 if __name__ == "__main__":
-
-    import argparse
-
-    parser = argparse.ArgumentParser(description="Bonsai and Simulator Integration...")
-    parser.add_argument(
-        "-r",
-        "--render",
-        action="store_true",
-        default=False,
-        help="Render training episodes",
-    )
-
-    args, _ = parser.parse_known_args()
-    main(args.render)
+    main()
