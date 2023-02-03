@@ -1,6 +1,6 @@
 import math
 import random
-from typing import Dict, Tuple, Optional, Callable
+from typing import Dict, Union, Tuple, List, Optional, Callable
 
 
 # Moab measured velocity at 15deg in 3/60ths, or 300deg/s
@@ -15,7 +15,7 @@ DEFAULT_PLATE_ANGULAR_ACCEL = (
 MAX_PLATE_ANGLE = math.radians(22)  # rad
 
 
-def clip(val: float, min_val: float, max_val: float) -> float:
+def clip(val: Union[float, int, Tuple, List], min_val: float, max_val: float) -> float:
     """clip a value, tuple, or array between a min and max."""
     if isinstance(val, (float, int)):
         return min(max_val, max(min_val, val))
