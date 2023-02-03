@@ -34,7 +34,7 @@ def clip(
 def moab_model(
     state: Tuple[float, float, float, float],
     action: Tuple[float, float],
-    dt: float,
+    current_dt: float,
     gravity: float,
     ball_radius: float,
     ball_shell: float,
@@ -76,6 +76,7 @@ def moab_model(
     x, y, vel_x, vel_y = state
     pitch, roll = action  # pitch is along x (theta_x), roll is along y (theta_y)
 
+    dt = current_dt  # use sampled dt (with added jitter), instead of avg dt
     r = ball_radius
     h = ball_radius - ball_shell  # hollow radius
 
@@ -115,11 +116,11 @@ def linear_acceleration(acc_magnitude: float, max_vel: float):
     q = 0.0  # Current position
     vel = 0.0  # Current velocity
 
-    def next_position(dest: float, dt: float):
+    def next_position(dest: float, current_dt: float):
         """
             args:
-                dest: target destination
-                dt:   current time delta (changes with jitter)
+                dest:       target destination
+                current_dt: current time delta (changes with jitter)
 
         returns: final_position
         """
@@ -133,10 +134,10 @@ def linear_acceleration(acc_magnitude: float, max_vel: float):
             direc = -1.0
 
         # Calculate the change in velocity and position
-        acc = acc_magnitude * direc * dt
-        vel_end = clip(vel + acc * dt, -max_vel, max_vel)
+        acc = acc_magnitude * direc * current_dt
+        vel_end = clip(vel + acc * current_dt, -max_vel, max_vel)
         vel_avg = (vel + vel_end) * 0.5
-        delta = vel_avg * dt
+        delta = vel_avg * current_dt
         vel = vel_end
 
         # Moving towards the dest?
@@ -203,7 +204,8 @@ class MoabSim:
             "max_starting_velocity": 1.0,  # m/s, Ping-Pong ball: 1.0m/s
         }
         if config is not None:
-            self._overwrite_params(config)
+            # Update the physics parameters with the config (values from inkling)
+            self.params.update(config)
 
         # By having the linear acceleration servos as optional, we can test how
         # the linear acceleration of the servos will impact the sim2real
@@ -219,19 +221,10 @@ class MoabSim:
             max_vel=DEFAULT_PLATE_MAX_ANGULAR_VELOCITY,
         )
 
-    def _overwrite_params(self, config: Dict[str, float]):
-        """
-        If config exists, overwrite all values of self.params with the matching
-        elements in config. (If the element doesn't exist in config, keep the
-        one from self.params). This is used to override the default physics
-        parameters with the ones specified in the config, this allows us to
-        easily change the physics parameters through inkling by passing config.
-        """
-        self.params = self.params | config
-
     def reset(self, config: Optional[Dict[str, float]] = None) -> Tuple[float, float]:
         if config is not None:
-            self._overwrite_params(config)
+            # Update the physics parameters with the config (values from inkling)
+            self.params.update(config)
 
         if (
             self.params.get("initial_x")
@@ -284,7 +277,7 @@ class MoabSim:
         # (we need to sample here to also pass the correct dt to the linear
         # acceleration function)
         jitter = self.params["jitter"]
-        dt = self.params["dt"] + random.uniform(-jitter, jitter)
+        current_dt = self.params["dt"] + random.uniform(-jitter, jitter)
 
         # Limit action to -1 to +1 of max plate angle
         pitch, roll = clip(action, -1, 1)
@@ -293,16 +286,17 @@ class MoabSim:
         # If we're using linear acceleration, use that to calculate the plate
         # angles for this timestep
         if self.use_linear_acceleration_servos:
-            pitch = self.lin_acc_pitch(pitch, dt)
-            roll = self.lin_acc_roll(roll, dt)
+            pitch = self.lin_acc_pitch(pitch, current_dt)
+            roll = self.lin_acc_roll(roll, current_dt)
             self.plate_angles = (pitch, roll)
         else:
             self.plate_angles = (pitch, roll)
 
         # Run the physics simulation
         # (Note: we're passing in the dt sampled above, not the original dt)
+
         self.state = moab_model(
-            self.state, self.plate_angles, **self.params | {"dt": dt}
+            self.state, self.plate_angles, **self.params, current_dt=current_dt
         )
 
         return self.state

@@ -79,13 +79,7 @@ def main():
 
 
 class MoabBonsaiSim:
-    def __init__(
-        self,
-        max_iterations: int = 300,
-        linear_acceleration_servos: bool = True,
-        quantize: bool = False,
-        moab_model_opt: Optional[Callable] = None,
-    ):
+    def __init__(self, max_iterations: int = 300):
         """Simulator Interface with the Bonsai Platform
 
         Parameters
