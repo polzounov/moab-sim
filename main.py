@@ -1,10 +1,9 @@
 import os
+import math
 import time
 import traceback
-import numpy as np
 
-from functools import partial
-from typing import Any, Dict, Union, Optional, Callable
+from typing import Dict, Optional, Callable
 
 from microsoft_bonsai_api.simulator.client import BonsaiClient, BonsaiClientConfig
 from microsoft_bonsai_api.simulator.generated.models import (
@@ -13,7 +12,7 @@ from microsoft_bonsai_api.simulator.generated.models import (
     SimulatorSessionResponse,
 )
 
-from moab_sim import MoabSim
+from moab_sim import MoabSim, clamp
 
 
 def main():
@@ -108,15 +107,19 @@ class MoabBonsaiSim:
         x, y, vel_x, vel_y = self.simulator.state
         pitch, roll = self.simulator.plate_angles
 
-        d["ball_x"], d["ball_y"] = x, y
-        d["ball_vel_x"], d["ball_vel_y"] = vel_x, vel_y
-        d["pitch"], d["roll"] = pitch, roll
+        # Ensure that everything is a float since Bonsai doesn't support numpy
+        # floats, they MUST be python floats
+        d["ball_x"], d["ball_y"] = float(x), float(y)
+        d["ball_vel_x"], d["ball_vel_y"] = float(vel_x), float(vel_y)
+        d["pitch"], d["roll"] = float(pitch), float(roll)
 
         # Calculate the plate normal. TODO: double check the math
         # This is ONLY for the visualizer, not for correctness of physics
-        d["plate_nor_x"] = float(np.cos(np.radians(pitch)) * np.sin(np.radians(roll)))
-        d["plate_nor_y"] = float(np.sin(np.radians(pitch)) * np.cos(np.radians(roll)))
-        d["plate_nor_z"] = float(np.cos(np.radians(pitch)) * np.cos(np.radians(roll)))
+        pitch_rad = math.radians(pitch)
+        roll_rad = math.radians(roll)
+        d["plate_nor_x"] = float(math.cos(pitch_rad) * math.sin(roll_rad))
+        d["plate_nor_y"] = float(math.sin(pitch_rad) * math.cos(roll_rad))
+        d["plate_nor_z"] = float(math.cos(pitch_rad) * math.cos(roll_rad))
 
         return d
 
@@ -130,15 +133,14 @@ class MoabBonsaiSim:
         """The terminal function, detects if ball is off the plate."""
         state = self.get_state()
         x, y = state["ball_x"], state["ball_y"]
-        halted = np.sqrt(x**2 + y**2) > state["plate_radius"]
+        halted = math.sqrt(x**2 + y**2) > state["plate_radius"]
         halted |= self.iteration_count >= self.max_iterations
         return halted
 
     def step(self, action: Dict) -> Dict[str, float]:
         """Step through the environment for a single iteration."""
         pitch, roll = action["input_pitch"], action["input_roll"]
-        action = np.array([pitch, roll], dtype=np.float32) * np.radians(22)
-        pitch, roll = np.clip(-1, 1, action)
+        pitch, roll = clamp(-1, 1, (pitch, roll))
 
         # In order to maintain brain compatibility on the hardware with brains
         # trained on a previous version of the simulator

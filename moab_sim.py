@@ -1,6 +1,5 @@
 import math
 import random
-import numpy as np
 from typing import Dict, Tuple, Optional, Callable
 
 
@@ -8,7 +7,9 @@ from typing import Dict, Tuple, Optional, Callable
 DEFAULT_PLATE_MAX_ANGULAR_VELOCITY = (60.0 / 3.0) * math.radians(15)  # rad/s
 
 # Set acceleration to get the plate up to velocity in 1/100th of a sec
-DEFAULT_PLATE_ANGULAR_ACCEL = (100.0 / 1.0) * DEFAULT_PLATE_MAX_ANGULAR_VELOCITY  # rad/s^2
+DEFAULT_PLATE_ANGULAR_ACCEL = (
+    100.0 / 1.0
+) * DEFAULT_PLATE_MAX_ANGULAR_VELOCITY  # rad/s^2
 
 # The maximum angle we allow of the Moab plate
 MAX_PLATE_ANGLE = math.radians(22)  # rad
@@ -29,7 +30,7 @@ def clamp(val: float, min_val: float, max_val: float) -> float:
 def moab_model(
     state: Tuple[float, float, float, float],
     action: Tuple[float, float],
-    current_dt: float,
+    dt: float,
     gravity: float,
     ball_radius: float,
     ball_shell: float,
@@ -62,7 +63,7 @@ def moab_model(
     args:
         state:          (x, y, vel_x, vel_y) in (m, m, m/s, m/s)
         action:         (pitch, roll) in (rad, rad)
-        current_dt:     time delta in seconds
+        dt:             time delta in seconds
         gravity:        gravity constant in m/s^2
         ball_radius:    radius of the ball in m
         ball_shell:     radius of the hollow part of the ball in m
@@ -74,14 +75,15 @@ def moab_model(
 
     r = ball_radius
     h = ball_radius - ball_shell  # hollow radius
-    dt = current_dt
 
     # Ball intertia for a hollow sphere is:
     # I = (2 / 5) * m * ((r**5 - h**5) / (r**3 - h**3))
     # Equations for acceleration on a plate at rest
     # a = (theta * m * g) / (m + (I / r**2))
     # Combine the two to get the acceleration divided by theta
-    acc_div_theta = gravity / (1 + (2 / 5) * ((r**5 - h**5) / (r**3 - h**3)) / (r**2))
+    acc_div_theta = gravity / (
+        1 + (2 / 5) * ((r**5 - h**5) / (r**3 - h**3)) / (r**2)
+    )
 
     # Equations of motion:
     x += vel_x * dt + 1 / 2 * (acc_div_theta * pitch) * dt**2
@@ -93,58 +95,57 @@ def moab_model(
     return x, y, vel_x, vel_y
 
 
-def linear_acceleration(
-    acc_magnitude: float,
-    max_vel: float,
-    dt: float,
-    dims: int = 2,
-):
+def linear_acceleration(acc_magnitude: float, max_vel: float):
     """
     Perform a linear acceleration of a variable towards a destination
-    with a hard stop at the destination. returns the position and velocity
-    after current_dt has elapsed.
+    with a hard stop at the destination. Returns the position after dt has
+    elapsed. This function keeps internal state of the current position and
+    velocity.
 
     args:
-        q:             current position
-        dest:          target destination
-        vel:           current velocity
         acc_magnitude: acceleration constant
         max_vel:       maximum velocity
-        current_dt:    time delta
 
-    returns: (final_position, final_velocity)
+    returns: function that takes in a destination and time delta and returns
+             the next position of the variable
     """
-    q = np.zeros((dims,))
-    vel = np.zeros((dims,))
+    q = 0.0  # Current position
+    vel = 0.0  # Current velocity
 
-    assert q.shape == vel.shape
+    def next_position(dest: float, dt: float):
+        """
+            args:
+                dest: target destination
+                dt:   current time delta (changes with jitter)
 
-    def next_position(dest: np.ndarray, current_dt: float = dt):
+        returns: final_position
+        """
         nonlocal q, vel
-        assert q.shape[0] == dims and vel.shape[0] == dims and dest.shape[0] == dims
 
-        # direction of accel
-        direc = np.sign(dest - q)
+        # Direction of accel
+        direc = 0.0
+        if q < dest:
+            direc = 1.0
+        if q > dest:
+            direc = -1.0
 
-        # calculate the change in velocity and position
-        acc = acc_magnitude * direc * current_dt
-        vel_end = np.clip(-max_vel, max_vel, vel + acc * current_dt)
+        # Calculate the change in velocity and position
+        acc = acc_magnitude * direc * dt
+        vel_end = clamp(vel + acc * dt, -max_vel, max_vel)
         vel_avg = (vel + vel_end) * 0.5
-        delta = vel_avg * current_dt
+        delta = vel_avg * dt
         vel = vel_end
 
-        # Do this for each direction. TODO: do this using vectors...
-        for i in range(dims):
-            # moving towards the dest?
-            if (direc[i] > 0 and q[i] < dest[i] and q[i] + delta[i] < dest[i]) or (
-                direc[i] < 0 and q[i] > dest[i] and q[i] + delta[i] > dest[i]
-            ):
-                q[i] = q[i] + delta[i]
+        # Moving towards the dest?
+        if (direc > 0 and q < dest and q + delta < dest) or (
+            direc < 0 and q > dest and q + delta > dest
+        ):
+            q = q + delta
 
-            # stop at dest
-            else:
-                q[i] = dest[i]
-                vel[i] = 0.0
+        # Stop at dest
+        else:
+            q = dest
+            vel = 0
 
         return q
 
@@ -201,12 +202,18 @@ class MoabSim:
         if config is not None:
             self._overwrite_params(config)
 
-        # TODO: explain what this does
+        # By having the linear acceleration servos as optional, we can test how
+        # the linear acceleration of the servos will impact the sim2real
+        # transfer (by adding additional simulation fidelity)
         self.use_linear_acceleration_servos = linear_acceleration_servos
-        self.lin_acc_fn = linear_acceleration(
+        # Reset the position of plate angular acceleration to the default (0 degrees)
+        self.lin_acc_pitch = linear_acceleration(
             acc_magnitude=DEFAULT_PLATE_ANGULAR_ACCEL,
             max_vel=DEFAULT_PLATE_MAX_ANGULAR_VELOCITY,
-            dt=self.params["dt"],
+        )
+        self.lin_acc_roll = linear_acceleration(
+            acc_magnitude=DEFAULT_PLATE_ANGULAR_ACCEL,
+            max_vel=DEFAULT_PLATE_MAX_ANGULAR_VELOCITY,
         )
 
     def _overwrite_params(self, config: Dict[str, float]):
@@ -246,13 +253,18 @@ class MoabSim:
             # Intialize within a uniform circle (uniformly distributed within a circle)
             plate_radius = self.params["plate_radius"]
             max_dist_ratio = self.params["max_starting_distance_ratio"]
-            self.state[:2] = uniform_circle(plate_radius * max_dist_ratio)
-            self.state[2:] = uniform_circle(self.params["max_starting_velocity"])
+            x, y = uniform_circle(plate_radius * max_dist_ratio)
+            x_vel, y_vel = uniform_circle(self.params["max_starting_velocity"])
+            self.state = (x, y, x_vel, y_vel)
 
-        self.lin_acc_fn = linear_acceleration(
+        # Reset the position of plate angular acceleration to the default (0 degrees)
+        self.lin_acc_pitch = linear_acceleration(
             acc_magnitude=DEFAULT_PLATE_ANGULAR_ACCEL,
             max_vel=DEFAULT_PLATE_MAX_ANGULAR_VELOCITY,
-            dt=self.params["dt"],
+        )
+        self.lin_acc_roll = linear_acceleration(
+            acc_magnitude=DEFAULT_PLATE_ANGULAR_ACCEL,
+            max_vel=DEFAULT_PLATE_MAX_ANGULAR_VELOCITY,
         )
 
         return self.state
@@ -268,24 +280,25 @@ class MoabSim:
         # Sample jitter and add to dt to get the correct dt for this timestep
         # (we need to sample here to also pass the correct dt to the linear
         # acceleration function)
-        dt = self.params["dt"]
         jitter = self.params["jitter"]
-        current_dt = dt + random.uniform(-jitter, jitter)
-
-        # By having the linear acceleration servos as optional, we can test how
-        # the linear acceleration of the servos will impact the sim2real
-        # transfer (by adding additional simulation fidelity)
-        if self.use_linear_acceleration_servos:
-            plate_angles = self.lin_acc_fn(
-                np.asarray(action, dtype=np.float32), current_dt=current_dt
-            )
-            self.plate_angles = tuple(plate_angles)
-        else:
-            self.plate_angles = action
+        dt = self.params["dt"] + random.uniform(-jitter, jitter)
 
         # Limit the plate angles to 22 degrees (same as in hardware)
-        self.plate_angles = clamp(self.plate_angles, -math.radians(22), math.radians(22))
+        pitch, roll = clamp(action, -math.radians(22), math.radians(22))
 
-        self.state = moab_model(self.state, self.plate_angles, current_dt=current_dt, **self.params)
+        # If we're using linear acceleration, use that to calculate the plate
+        # angles for this timestep
+        if self.use_linear_acceleration_servos:
+            pitch = self.lin_acc_pitch(pitch, dt)
+            roll = self.lin_acc_roll(roll, dt)
+            self.plate_angles = (pitch, roll)
+        else:
+            self.plate_angles = (pitch, roll)
+
+        # Run the physics simulation
+        # (Note: we're passing in the dt sampled above, not the original dt)
+        self.state = moab_model(
+            self.state, self.plate_angles, **self.params | {"dt": dt}
+        )
 
         return self.state
