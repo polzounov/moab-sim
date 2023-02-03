@@ -15,14 +15,14 @@ DEFAULT_PLATE_ANGULAR_ACCEL = (
 MAX_PLATE_ANGLE = math.radians(22)  # rad
 
 
-def clamp(val: float, min_val: float, max_val: float) -> float:
-    """Clamp a value, tuple, or array between a min and max."""
+def clip(val: float, min_val: float, max_val: float) -> float:
+    """clip a value, tuple, or array between a min and max."""
     if isinstance(val, (float, int)):
         return min(max_val, max(min_val, val))
     elif isinstance(val, (tuple)):
-        return tuple([clamp(v, min_val, max_val) for v in val])
+        return tuple([clip(v, min_val, max_val) for v in val])
     elif isinstance(val, (list)):
-        return [clamp(v, min_val, max_val) for v in val]
+        return [clip(v, min_val, max_val) for v in val]
     else:
         raise TypeError("val must be a float, int, tuple, or list")
 
@@ -131,7 +131,7 @@ def linear_acceleration(acc_magnitude: float, max_vel: float):
 
         # Calculate the change in velocity and position
         acc = acc_magnitude * direc * dt
-        vel_end = clamp(vel + acc * dt, -max_vel, max_vel)
+        vel_end = clip(vel + acc * dt, -max_vel, max_vel)
         vel_avg = (vel + vel_end) * 0.5
         delta = vel_avg * dt
         vel = vel_end
@@ -283,8 +283,9 @@ class MoabSim:
         jitter = self.params["jitter"]
         dt = self.params["dt"] + random.uniform(-jitter, jitter)
 
-        # Limit the plate angles to 22 degrees (same as in hardware)
-        pitch, roll = clamp(action, -math.radians(22), math.radians(22))
+        # Limit action to -1 to +1 of max plate angle
+        pitch, roll = clip(action, -1, 1)
+        pitch, roll = pitch * MAX_PLATE_ANGLE, roll * MAX_PLATE_ANGLE
 
         # If we're using linear acceleration, use that to calculate the plate
         # angles for this timestep

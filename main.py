@@ -12,7 +12,7 @@ from microsoft_bonsai_api.simulator.generated.models import (
     SimulatorSessionResponse,
 )
 
-from moab_sim import MoabSim, clamp
+from moab_sim import MoabSim, clip
 
 
 def main():
@@ -140,7 +140,7 @@ class MoabBonsaiSim:
     def step(self, action: Dict) -> Dict[str, float]:
         """Step through the environment for a single iteration."""
         pitch, roll = action["input_pitch"], action["input_roll"]
-        pitch, roll = clamp(-1, 1, (pitch, roll))
+        pitch, roll = clip((pitch, roll), -1, 1)
 
         # In order to maintain brain compatibility on the hardware with brains
         # trained on a previous version of the simulator
