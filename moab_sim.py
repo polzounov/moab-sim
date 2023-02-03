@@ -15,8 +15,12 @@ DEFAULT_PLATE_ANGULAR_ACCEL = (
 MAX_PLATE_ANGLE = math.radians(22)  # rad
 
 
-def clip(val: Union[float, int, Tuple, List], min_val: float, max_val: float) -> float:
-    """clip a value, tuple, or array between a min and max."""
+def clip(
+    val: Union[float, int, Tuple[Union[float, int], ...], List[Union[float, int], ...]],
+    min_val: float,
+    max_val: float,
+) -> float:
+    """clip a number, tuple, or array (of numbers) between a min and max."""
     if isinstance(val, (float, int)):
         return min(max_val, max(min_val, val))
     elif isinstance(val, (tuple)):
@@ -206,7 +210,7 @@ class MoabSim:
         # the linear acceleration of the servos will impact the sim2real
         # transfer (by adding additional simulation fidelity)
         self.use_linear_acceleration_servos = linear_acceleration_servos
-        # Reset the position of plate angular acceleration to the default (0 degrees)
+        # Reset the plate angular acceleration fn state to default (0 degrees)
         self.lin_acc_pitch = linear_acceleration(
             acc_magnitude=DEFAULT_PLATE_ANGULAR_ACCEL,
             max_vel=DEFAULT_PLATE_MAX_ANGULAR_VELOCITY,
