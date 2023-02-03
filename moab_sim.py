@@ -3,6 +3,8 @@ import random
 from typing import Dict, Union, Tuple, List, Optional, Callable
 
 
+numeric = Union[int, float]  # type alias for ints or floats
+
 # Moab measured velocity at 15deg in 3/60ths, or 300deg/s
 DEFAULT_PLATE_MAX_ANGULAR_VELOCITY = (60.0 / 3.0) * math.radians(15)  # rad/s
 
@@ -16,10 +18,10 @@ MAX_PLATE_ANGLE = math.radians(22)  # rad
 
 
 def clip(
-    val: Union[float, int, Tuple[Union[float, int], ...], List[Union[float, int], ...]],
-    min_val: float,
-    max_val: float,
-) -> float:
+    val: Union[numeric, Tuple[numeric, ...], List[numeric, ...]],
+    min_val: numeric,
+    max_val: numeric,
+) -> numeric:
     """clip a number, tuple, or array (of numbers) between a min and max."""
     if isinstance(val, (float, int)):
         return min(max_val, max(min_val, val))
