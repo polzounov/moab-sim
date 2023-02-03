@@ -3,8 +3,6 @@ import random
 from typing import Dict, Union, Tuple, List, Optional, Callable
 
 
-numeric = Union[int, float]  # type alias for ints or floats
-
 # Moab measured velocity at 15deg in 3/60ths, or 300deg/s
 DEFAULT_PLATE_MAX_ANGULAR_VELOCITY = (60.0 / 3.0) * math.radians(15)  # rad/s
 
@@ -18,10 +16,10 @@ MAX_PLATE_ANGLE = math.radians(22)  # rad
 
 
 def clip(
-    val: Union[numeric, Tuple[numeric, ...], List[numeric, ...]],
-    min_val: numeric,
-    max_val: numeric,
-) -> numeric:
+    val: Union[int, float, Tuple, List],
+    min_val: Union[int, float],
+    max_val: Union[int, float],
+) -> Union[int, float, Tuple, List]:
     """clip a number, tuple, or array (of numbers) between a min and max."""
     if isinstance(val, (float, int)):
         return min(max_val, max(min_val, val))
@@ -58,7 +56,6 @@ def moab_model(
     And the moment of inertia of a hollow sphere is:
         I = (2 / 5) * m * ((r**5 - h**5) / (r**3 - h**3))
     Where r is the radius of the ball and h is the radius of the hollow part.
-
 
     Then we can use the equations of motion to calculate the ball's next
     position and velocity:
