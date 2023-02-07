@@ -1,5 +1,5 @@
 # this is one of the cached base images available for ACI
-FROM python:3.9
+FROM python:3.7.13
 
 # Install libraries and dependencies
 RUN apt-get update && \

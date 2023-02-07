@@ -47,9 +47,7 @@ def train(
     )
 
     if render_checkpoints:
-        eval_callback = EvalCallback(
-            eval_env, eval_freq=checkpoint_frequency, render=True
-        )
+        eval_callback = EvalCallback(eval_env, eval_freq=checkpoint_frequency, render=True)
         callback = CallbackList([checkpoint_callback, eval_callback])
     else:
         callback = checkpoint_callback
@@ -162,10 +160,10 @@ if __name__ == "__main__":
         #     "env_name": "MoabEnv",
         #     "lstm": False,
         # },
-        "mini-dr-ff": {
-            "env_name": "MoabPartialDomainRandEnv",
-            "lstm": False,
-        },
+        # "dr-ff": {
+        #     "env_name": "MoabDomainRandEnv",
+        #     "lstm": False,
+        # },
         # "reference-no-dr": {"env_name": "MoabEnv"},
         # "dr": {},
         # "dr-no-reset": {"reset_hidden": False},
