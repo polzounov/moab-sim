@@ -28,7 +28,7 @@ def clip(
     elif isinstance(val, (list)):
         return [clip(v, min_val, max_val) for v in val]
     else:
-        raise TypeError("val must be a float, int, tuple, or list")
+        raise TypeError(f"val must be a float, int, tuple, or list. Got {type(val)}")
 
 
 def moab_model(
