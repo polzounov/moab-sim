@@ -2,11 +2,15 @@
 Simulator for the Moab plate+ball balancing device.
 """
 
+import os
+import sys
 import cv2
 import pygame
 import numpy as np
 from time import sleep
 from gym import Env, spaces
+
+sys.path.append(os.getcwd() + "/..")
 from moab_sim import MoabSim
 
 pygame.init()

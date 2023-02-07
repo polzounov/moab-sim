@@ -2,11 +2,11 @@ import sys
 import gym
 import time
 import numpy as np
+
 from moab_env import MoabEnv, MoabDomainRandEnv
 from sb3_contrib import RecurrentPPO
 
 env = MoabDomainRandEnv()
-# model = PPO.load(sys.argv[1])
 model = RecurrentPPO.load(sys.argv[1])
 
 

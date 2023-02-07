@@ -1,9 +1,9 @@
-import matplotlib.pyplot as plt
-import numpy as np
-import sys
 import os
+import sys
+import numpy as np
+import matplotlib.pyplot as plt
 
-sys.path.append(os.getcwd() + '/..')
+sys.path.append(os.getcwd() + "/..")
 
 from moab_sim import uniform_circle
 

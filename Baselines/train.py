@@ -1,8 +1,8 @@
 import sys
 import gym
+
 from moab_env import MoabEnv, MoabDomainRandEnv, MoabPartialDomainRandEnv
 from gym.wrappers import TimeLimit
-
 from stable_baselines3 import PPO
 from sb3_contrib import RecurrentPPO
 from sb3_contrib.common.recurrent.policies import RecurrentActorCriticPolicy
@@ -47,7 +47,9 @@ def train(
     )
 
     if render_checkpoints:
-        eval_callback = EvalCallback(eval_env, eval_freq=checkpoint_frequency, render=True)
+        eval_callback = EvalCallback(
+            eval_env, eval_freq=checkpoint_frequency, render=True
+        )
         callback = CallbackList([checkpoint_callback, eval_callback])
     else:
         callback = checkpoint_callback
@@ -145,7 +147,6 @@ if __name__ == "__main__":
     import argparse
 
     parser = argparse.ArgumentParser()
-    # parser.add_argument("--logs", default="./logs", type=str)
     parser.add_argument("-c", "--checkpoint-frequency", default=10_000, type=int)
     parser.add_argument("-p", "--play-when-done", default=False, type=bool)
     parser.add_argument("-r", "--render-checkpoints", default=False, type=bool)
@@ -155,20 +156,14 @@ if __name__ == "__main__":
     num_timesteps = int(args.num_timesteps)
 
     runs = {
-        # "reference-no-lstm": {"lstm": False},
-        # "no-lstm-newenv": {
-        #     "env_name": "MoabEnv",
-        #     "lstm": False,
-        # },
-        # "dr-ff": {
-        #     "env_name": "MoabDomainRandEnv",
-        #     "lstm": False,
-        # },
-        # "reference-no-dr": {"env_name": "MoabEnv"},
-        # "dr": {},
-        # "dr-no-reset": {"reset_hidden": False},
-        # "dr-critic-no-lstm": {"enable_critic_lstm": False},
-        # "dr-critic-shared-lstm": {"shared_lstm": True, "enable_critic_lstm": False},
+        "reference-no-lstm": {"lstm": False},
+        "no-lstm-newenv": {"env_name": "MoabEnv", "lstm": False},
+        "dr-ff": {"env_name": "MoabDomainRandEnv", "lstm": False},
+        "reference-no-dr": {"env_name": "MoabEnv"},
+        "dr": {},
+        "dr-no-reset": {"reset_hidden": False},
+        "dr-critic-no-lstm": {"enable_critic_lstm": False},
+        "dr-critic-shared-lstm": {"shared_lstm": True, "enable_critic_lstm": False},
     }
 
     for run_name, params in runs.items():
