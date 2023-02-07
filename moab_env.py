@@ -29,7 +29,9 @@ class MoabEnv(Env):
 
         act_max = np.asarray([1, 1], dtype=np.float32)
         plate_radius = self.sim.params["plate_radius"]
-        obs_max = np.asarray([plate_radius, plate_radius, np.inf, np.inf], dtype=np.float32)
+        obs_max = np.asarray(
+            [plate_radius, plate_radius, np.inf, np.inf], dtype=np.float32
+        )
         self.observation_space = spaces.Box(-obs_max, obs_max)
         self.action_space = spaces.Box(-act_max, act_max)
         self.max_iterations = max_iterations
@@ -42,8 +44,10 @@ class MoabEnv(Env):
         pass
 
     def reset(self, config=None):
-        self.state = self.sim.reset(config)
+        state = self.sim.reset(config)
         self.iteration_count = 0
+
+        self.state = np.asarray(state, dtype=np.float32)
         return self.state
 
     def done(self) -> bool:
@@ -60,10 +64,11 @@ class MoabEnv(Env):
 
     def step(self, action):
         # Action is -1, 1 scaled
-        action = np.asarray(action) * np.radians(22)
+        action = np.asarray(action)
         if self.quantize:
             action = np.radians(np.round(np.degrees(action)))
         pitch, roll = np.clip(-1, 1, action)
+        pitch, roll = float(pitch), float(roll)
 
         action_legacy = (roll, -pitch)
         state = self.sim.step(action_legacy)
