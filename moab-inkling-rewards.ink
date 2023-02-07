@@ -95,11 +95,11 @@ graph (input: ObservableState) {
             #  - can be configured for each episode using fields defined in SimConfig,
             #  - accepts per-iteration actions defined in SimAction, and
             #  - outputs states with the fields defined in SimState.
-            # source simulator MoabSim(Action: SimAction, Config: SimConfig): ObservableState {
+            source simulator MoabSim(Action: SimAction, Config: SimConfig): ObservableState {
             #     # Automatically launch the simulator with this
             #     # registered package name.
             #     package "Moab"
-            # }
+            }
 
             reward RewardFn
             terminal TerminalFn

@@ -88,7 +88,7 @@ graph (input: ObservableState) {
             source simulator MoabSim(Action: SimAction, Config: SimConfig): ObservableState {
                 # Automatically launch the simulator with this
                 # registered package name.
-                # package "moabsim-py-xnov30-3022"
+                # package "Moab"
             }
 
             # The training goal has two objectives:
