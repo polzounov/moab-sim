@@ -28,6 +28,7 @@ class MoabEnv(Env):
     ):
         self.sim = MoabSim(
             linear_acceleration_servos=linear_acceleration_servos,
+            quantize=quantize,
             # camera_adjust=camera_adjust,
         )
 
@@ -40,7 +41,6 @@ class MoabEnv(Env):
         self.action_space = spaces.Box(-act_max, act_max)
         self.max_iterations = max_iterations
         self.state = self.sim.state
-        self.quantize = quantize
         self.iteration_count = 0
         self._viewer = None
 
@@ -67,14 +67,13 @@ class MoabEnv(Env):
         return reward
 
     def step(self, action):
-        # Action is -1, 1 scaled
-        action = np.asarray(action)
-        if self.quantize:
-            action = np.radians(np.round(np.degrees(action)))
+        action = np.asarray(action)  # Action is -1, 1 scaled
         pitch, roll = np.clip(-1, 1, action)
         pitch, roll = float(pitch), float(roll)
 
+        # Legacy action mapping (for compatibility with old brains)
         action_legacy = (roll, -pitch)
+
         state = self.sim.step(action_legacy)
         self.state = np.asarray(state, dtype=np.float32)
 

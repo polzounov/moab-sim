@@ -182,6 +182,7 @@ class MoabSim:
         self,
         config: Optional[Dict[str, float]] = None,
         linear_acceleration_servos: bool = True,
+        quantize: bool = False,
         camera_adjust: bool = True,
     ):
         """
@@ -220,6 +221,7 @@ class MoabSim:
             acc_magnitude=DEFAULT_PLATE_ANGULAR_ACCEL,
             max_vel=DEFAULT_PLATE_MAX_ANGULAR_VELOCITY,
         )
+        self.quantize = quantize
 
     def reset(self, config: Optional[Dict[str, float]] = None) -> Tuple[float, float]:
         if config is not None:
@@ -282,6 +284,12 @@ class MoabSim:
         # Limit action to -1 to +1 of max plate angle
         pitch, roll = clip(action, -1, 1)
         pitch, roll = pitch * MAX_PLATE_ANGLE, roll * MAX_PLATE_ANGLE
+
+        # If using quantized servos, round the plate angles to the nearest
+        # angle in degrees
+        if self.quantize:
+            pitch = math.radians(round(math.degrees(pitch)))
+            roll = math.radians(round(math.degrees(roll)))
 
         # If we're using linear acceleration, use that to calculate the plate
         # angles for this timestep
